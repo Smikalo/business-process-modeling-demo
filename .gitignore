@@ -3,4 +3,6 @@ CLAUDE.md
 .venv/
 data/
 *.txt
-*.csv
+*.csvh
+.claude
+.idea
