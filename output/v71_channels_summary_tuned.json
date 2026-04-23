@@ -1,0 +1,55 @@
+{
+  "recency_gamma": 0.95,
+  "global_tag": "rec95_tuned",
+  "best_w": 0.7,
+  "best": {
+    "w_spec": 0.7,
+    "test_WAPE": 0.4073,
+    "test_Bias": -0.486,
+    "UAH_cost": 2014893,
+    "holding_UAH": 1572785,
+    "lost_UAH": 442108
+  },
+  "all": [
+    {
+      "w_spec": 0.0,
+      "test_WAPE": 0.4139,
+      "test_Bias": -0.454,
+      "UAH_cost": 2068105,
+      "holding_UAH": 1629000,
+      "lost_UAH": 439104
+    },
+    {
+      "w_spec": 0.3,
+      "test_WAPE": 0.4088,
+      "test_Bias": -0.468,
+      "UAH_cost": 2030563,
+      "holding_UAH": 1591941,
+      "lost_UAH": 438621
+    },
+    {
+      "w_spec": 0.5,
+      "test_WAPE": 0.4072,
+      "test_Bias": -0.477,
+      "UAH_cost": 2017447,
+      "holding_UAH": 1577769,
+      "lost_UAH": 439677
+    },
+    {
+      "w_spec": 0.7,
+      "test_WAPE": 0.4073,
+      "test_Bias": -0.486,
+      "UAH_cost": 2014893,
+      "holding_UAH": 1572785,
+      "lost_UAH": 442108
+    },
+    {
+      "w_spec": 1.0,
+      "test_WAPE": 0.4104,
+      "test_Bias": -0.499,
+      "UAH_cost": 2029342,
+      "holding_UAH": 1581412,
+      "lost_UAH": 447930
+    }
+  ]
+}

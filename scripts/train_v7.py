@@ -58,8 +58,11 @@ log = logging.getLogger("train_v7")
 OUT = _REPO_ROOT / "output"
 
 
-def _load_v7() -> pd.DataFrame:
-    abt = pd.read_parquet(OUT / "abt_v7_cached.parquet").pipe(encode_categoricals)
+def _load_v7(abt_path: str | Path = "abt_v7_cached.parquet") -> pd.DataFrame:
+    p = Path(abt_path)
+    if not p.is_absolute():
+        p = OUT / p
+    abt = pd.read_parquet(p).pipe(encode_categoricals)
     return abt
 
 
@@ -141,6 +144,9 @@ def main() -> int:
     ap.add_argument("--em-rounds", type=int, default=0,
                     help="V7.1: re-impute censored demand using the model's own "
                          "predictions and retrain (0 = disabled, 1 = one EM round).")
+    ap.add_argument("--abt-path", default="abt_v7_cached.parquet",
+                    help="ABT parquet (relative to output/ or absolute path). "
+                         "Use abt_v72_cached.parquet for V7.2.")
     ap.add_argument("--save-tag", default="",
                     help="Suffix for saved artefacts (model_v7{_tag}.joblib, "
                          "preds_v7{_tag}_*.csv).  Empty keeps the default V7 paths.")
@@ -149,11 +155,11 @@ def main() -> int:
     tag = f"_{args.save_tag}" if args.save_tag else ""
 
     t_all = time.time()
-    abt = _load_v7()
+    abt = _load_v7(args.abt_path)
     feats = get_feature_columns_v2(abt)
     feats = [c for c in feats if c != "target_qty_imputed"]
 
-    log.info("V7 ABT: %d rows, %d features (V6+price+cohort)", len(abt), len(feats))
+    log.info("ABT: %d rows, %d features (source=%s)", len(abt), len(feats), args.abt_path)
 
     df_train, df_val, df_test = split_train_val_test(abt)
     active = filter_active_pairs(df_train)

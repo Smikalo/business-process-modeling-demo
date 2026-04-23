@@ -1,0 +1,16 @@
+{
+  "best_score": 2096775.6359416267,
+  "best_params": {
+    "num_leaves": 94,
+    "learning_rate": 0.01005442119720846,
+    "feature_fraction": 0.6344361147571675,
+    "bagging_fraction": 0.7358751779296059,
+    "bagging_freq": 3,
+    "min_data_in_leaf": 75,
+    "reg_lambda": 0.0015546048788006187
+  },
+  "n_trials": 30,
+  "objective": "val_UAH_cost",
+  "alpha": 0.45,
+  "recency_gamma": 0.95
+}

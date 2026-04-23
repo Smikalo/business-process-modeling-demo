@@ -41,25 +41,23 @@ OUT = _REPO / "output"
 CHANNELS = ("ИМ", "НКП", "РС", "СК")
 
 
-def _train_channel(channel: str, recency_gamma: float, num_boost_round: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Train a V7 specialist on a single channel.  Returns (val_preds, test_preds)."""
-    tag = f"ch_{_ascii(channel)}"
-    abt = pd.read_parquet(OUT / "abt_v7_cached.parquet")
+def _train_channel(channel: str, recency_gamma: float, num_boost_round: int,
+                   optuna_params: str | None = None,
+                   abt_path: str = "abt_v7_cached.parquet",
+                   tag_prefix: str = "ch") -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Train a V7 specialist on a single channel.  Returns (val_preds, test_preds).
+
+    `abt_path` — name of the full-panel ABT under output/ (abt_v7_cached.parquet
+    for V7.1, abt_v72_cached.parquet for V7.2).  A channel-filtered copy with
+    the same filename is temporarily written to feed downstream train_v7.
+    """
+    tag = f"{tag_prefix}_{_ascii(channel)}"
+    abt = pd.read_parquet(OUT / abt_path)
     sub = abt[abt["Канал"] == channel].copy()
-    sub_path = OUT / f"abt_v7_cached_{tag}.parquet"
+    sub_path = OUT / f"{abt_path.rsplit('.parquet', 1)[0]}_{tag}.parquet"
     sub.to_parquet(sub_path)
     log.info("  specialist %s: %d rows", channel, len(sub))
 
-    # Temporarily swap the ABT path by env var?  Simpler: a symlink.
-    orig_path = OUT / "abt_v7_cached.parquet"
-    backup = OUT / "abt_v7_cached_original.parquet"
-    if not backup.exists():
-        # Hard-copy so we never lose the real ABT.
-        import shutil
-        shutil.copy(orig_path, backup)
-    # Swap
-    import shutil
-    shutil.copy(sub_path, orig_path)
     try:
         cmd = [
             sys.executable, "-m", "scripts.train_v7",
@@ -67,14 +65,16 @@ def _train_channel(channel: str, recency_gamma: float, num_boost_round: int) -> 
             "--num-boost-round", str(num_boost_round),
             "--recency-gamma", str(recency_gamma),
             "--save-tag", tag,
+            "--abt-path", str(sub_path),
         ]
+        if optuna_params:
+            cmd.extend(["--optuna-params", optuna_params])
         r = subprocess.run(cmd, cwd=_REPO, capture_output=True, text=True)
         if r.returncode != 0:
             log.error("train_v7 %s FAILED:\n%s", tag, r.stderr[-1500:])
             raise SystemExit(r.returncode)
     finally:
-        # Restore
-        shutil.copy(backup, orig_path)
+        pass
 
     val = pd.read_csv(OUT / f"preds_v7_{tag}_val.csv")
     tst = pd.read_csv(OUT / f"preds_v7_{tag}_test.csv")
@@ -100,17 +100,27 @@ def main() -> int:
     ap.add_argument("--weights", type=float, nargs="+",
                     default=[0.0, 0.3, 0.5, 0.7, 1.0],
                     help="Blend weights to sweep.")
+    ap.add_argument("--optuna-params", default=None,
+                    help="Path to Optuna best params JSON; forwarded to specialists.")
+    ap.add_argument("--abt-path", default="abt_v7_cached.parquet",
+                    help="Full-panel ABT name under output/. Use abt_v72_cached.parquet for V7.2.")
+    ap.add_argument("--tag-prefix", default="ch",
+                    help="Prefix for specialist save-tags (e.g. 'ch' → ch_im, 'ch72' → ch72_im).")
     args = ap.parse_args()
 
-    abt = pd.read_parquet(OUT / "abt_v7_cached.parquet")
+    abt = pd.read_parquet(OUT / args.abt_path)
     margin = pd.read_parquet(OUT / "sku_margin.parquet")
 
-    log.info("Training %d channel specialists (γ=%.2f)", len(CHANNELS), args.recency_gamma)
+    log.info("Training %d channel specialists (γ=%.2f) on ABT=%s",
+             len(CHANNELS), args.recency_gamma, args.abt_path)
     spec_val = []
     spec_test = []
     t0 = time.time()
     for ch in CHANNELS:
-        v, t = _train_channel(ch, args.recency_gamma, args.num_boost_round)
+        v, t = _train_channel(ch, args.recency_gamma, args.num_boost_round,
+                              optuna_params=args.optuna_params,
+                              abt_path=args.abt_path,
+                              tag_prefix=args.tag_prefix)
         spec_val.append(v)
         spec_test.append(t)
     log.info("All specialists trained in %.1fs", time.time() - t0)
@@ -169,11 +179,12 @@ def main() -> int:
         if best is None or cost["total_UAH"] < best["UAH_cost"]:
             best = rec
 
+    # Output names disambiguated by tag_prefix so V7.2 doesn't clobber V7.1.
+    suffix = "" if args.tag_prefix == "ch" else f"_{args.tag_prefix}"
     tbl = pd.DataFrame(rows)
-    tbl.to_csv(OUT / "v71_channels_blend.csv", index=False)
+    tbl.to_csv(OUT / f"v71_channels_blend{suffix}.csv", index=False)
     log.info("\n%s", tbl.to_string(index=False))
 
-    # Save champion blended preds
     w_best = best["w_spec"]
     merged_test["blend"] = (w_best * merged_test["pred_spec"]
                             + (1 - w_best) * merged_test["pred_global"]).clip(lower=0)
@@ -181,12 +192,12 @@ def main() -> int:
                            + (1 - w_best) * merged_val["pred_global"]).clip(lower=0)
     merged_val[[*key, "target_qty", "blend"]].rename(
         columns={"blend": "prediction"}
-    ).to_csv(OUT / "preds_v71_channels_val.csv", index=False)
+    ).to_csv(OUT / f"preds_v71_channels{suffix}_val.csv", index=False)
     merged_test[[*key, "target_qty", "blend"]].rename(
         columns={"blend": "prediction"}
-    ).to_csv(OUT / "preds_v71_channels_test.csv", index=False)
+    ).to_csv(OUT / f"preds_v71_channels{suffix}_test.csv", index=False)
 
-    (OUT / "v71_channels_summary.json").write_text(json.dumps({
+    (OUT / f"v71_channels_summary{suffix}.json").write_text(json.dumps({
         "recency_gamma": args.recency_gamma,
         "global_tag": args.global_tag,
         "best_w": w_best,

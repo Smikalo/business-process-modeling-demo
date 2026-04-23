@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import subprocess
 import sys
@@ -28,14 +29,20 @@ def _score(preds_path: Path, tag: str) -> dict:
 
 
 def main() -> int:
-    # Rebuild the blended preds at each weight using already-saved
-    # globals (rec95) + specialists (stored in the preds_v71_channels_*.csv,
-    # but we only have ONE blend saved).  Instead, read per-channel preds
-    # and re-combine.
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tag-prefix", default="ch",
+                    help="Specialist tag prefix (ch for V7.1, ch72 for V7.2).")
+    ap.add_argument("--global-tag", default="rec95",
+                    help="Global model tag (rec95 for V7.1, v72_global for V7.2).")
+    ap.add_argument("--output-prefix", default="v71",
+                    help="Prefix for output files (v71 or v72).")
+    args = ap.parse_args()
+
     key = ["Период", "Партнер", "Артикул"]
     specs_test = []
     specs_val = []
-    for ch_tag in ("ch_im", "ch_nkp", "ch_rs", "ch_sk"):
+    for ch in ("im", "nkp", "rs", "sk"):
+        ch_tag = f"{args.tag_prefix}_{ch}"
         v = pd.read_csv(OUT / f"preds_v7_{ch_tag}_val.csv")
         t = pd.read_csv(OUT / f"preds_v7_{ch_tag}_test.csv")
         specs_test.append(t)
@@ -47,10 +54,10 @@ def main() -> int:
         columns={"prediction": "pred_spec"}
     )
 
-    gt = pd.read_csv(OUT / "preds_v7_rec95_test.csv").rename(
+    gt = pd.read_csv(OUT / f"preds_v7_{args.global_tag}_test.csv").rename(
         columns={"prediction": "pred_global"}
     )
-    gv = pd.read_csv(OUT / "preds_v7_rec95_val.csv").rename(
+    gv = pd.read_csv(OUT / f"preds_v7_{args.global_tag}_val.csv").rename(
         columns={"prediction": "pred_global"}
     )
 
@@ -78,21 +85,20 @@ def main() -> int:
         print(f"w={w:.2f}  total={rows[-1]['total_UAH']:>10,}  holding={rows[-1]['holding_UAH']:>10,}  lost={rows[-1]['lost_UAH']:>10,}")
 
     tbl = pd.DataFrame(rows)
-    tbl.to_csv(OUT / "v71_channel_blend_sweep.csv", index=False)
+    tbl.to_csv(OUT / f"{args.output_prefix}_channel_blend_sweep.csv", index=False)
     best = tbl.loc[tbl["total_UAH"].idxmin()]
     print(f"\nBEST: w={best['w_spec']}  total={int(best['total_UAH']):,} UAH")
 
-    # Persist the champion blended preds at the best w
     w = float(best["w_spec"])
     test["blend"] = (w * test["pred_spec"] + (1 - w) * test["pred_global"]).clip(lower=0)
     val["blend"] = (w * val["pred_spec"] + (1 - w) * val["pred_global"]).clip(lower=0)
     val[[*key, "target_qty", "blend"]].rename(columns={"blend": "prediction"}
-                                              ).to_csv(OUT / "preds_v71_val.csv", index=False)
+                                              ).to_csv(OUT / f"preds_{args.output_prefix}_val.csv", index=False)
     test[[*key, "target_qty", "blend"]].rename(columns={"blend": "prediction"}
-                                               ).to_csv(OUT / "preds_v71_test.csv", index=False)
+                                               ).to_csv(OUT / f"preds_{args.output_prefix}_test.csv", index=False)
 
-    (OUT / "v71_champion.json").write_text(json.dumps({
-        "champion": "v71_rec95_chblend",
+    (OUT / f"{args.output_prefix}_champion.json").write_text(json.dumps({
+        "champion": f"{args.output_prefix}_{args.global_tag}_chblend",
         "recency_gamma": 0.95,
         "blend_weight_specialist": w,
         "UAH_cost": int(best["total_UAH"]),

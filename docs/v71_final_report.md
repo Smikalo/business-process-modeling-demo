@@ -137,12 +137,16 @@ python -m scripts.sweep_channel_blend
 # 4. Generate V7.1 dashboard + stand-alone plots
 python -m scripts.viz_v71_performance
 
-# 5. (Optional) when Kaggle Optuna kernel finishes, pull best params and
-#    re-train:
+# 5. (Optional) Optuna-tuned sibling — see docs/v71_optuna_comparison.md
+#    for why this variant did NOT become the champion (+12.5K UAH worse
+#    on business cost despite better pinball/WAPE).
+bash scripts/pull_kaggle_kernel_output.sh --slug <user>/bpm-v7-optuna
+cp output/gpu/v7_optuna_best_params.json output/v7_optuna_best.json
 python -m scripts.train_v7 \
     --disable-residual --save-tag rec95_tuned \
     --recency-gamma 0.95 --optuna-params output/v7_optuna_best.json
-python -m scripts.train_v71_channels --global-tag rec95_tuned --recency-gamma 0.95
+python -m scripts.train_v71_channels --global-tag rec95_tuned \
+    --recency-gamma 0.95 --optuna-params output/v7_optuna_best.json
 python -m scripts.sweep_channel_blend
 ```
 
@@ -152,5 +156,7 @@ python -m scripts.sweep_channel_blend
 - Per-row business-cost LightGBM objective.
 - Ingest negotiated-margin data → meaningful per-SKU newsvendor α.
 - Multi-round EM with bias-aware stopping criterion.
-- Per-channel Optuna tuning.
+- Per-channel Optuna tuning, **tuning directly on UAH cost instead of
+  pinball loss** (the val-pinball-tuned variant was ~12.5K UAH worse —
+  see `docs/v71_optuna_comparison.md`).
 - Explicit Q4 promo-forward feature to close the Nov–Dec bias gap.

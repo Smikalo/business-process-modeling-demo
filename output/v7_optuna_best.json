@@ -1,0 +1,13 @@
+{
+  "best_score": 0.4352171747856353,
+  "best_params": {
+    "num_leaves": 118,
+    "learning_rate": 0.019115731998165457,
+    "feature_fraction": 0.5224231130676331,
+    "bagging_fraction": 0.8199317773529302,
+    "bagging_freq": 8,
+    "min_data_in_leaf": 22,
+    "reg_lambda": 0.41135404074105864
+  },
+  "n_trials": 120
+}

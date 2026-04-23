@@ -1,0 +1,71 @@
+{
+  "recency_gamma": 0.95,
+  "global_tag": "v72_uahopt",
+  "best_w": 0.5,
+  "best": {
+    "w_spec": 0.5,
+    "test_WAPE": 0.4086,
+    "test_Bias": -0.535,
+    "UAH_cost": 1965844,
+    "holding_UAH": 1512727,
+    "lost_UAH": 453117
+  },
+  "all": [
+    {
+      "w_spec": 0.0,
+      "test_WAPE": 0.4125,
+      "test_Bias": -0.513,
+      "UAH_cost": 1995325,
+      "holding_UAH": 1543518,
+      "lost_UAH": 451806
+    },
+    {
+      "w_spec": 0.3,
+      "test_WAPE": 0.4092,
+      "test_Bias": -0.526,
+      "UAH_cost": 1971545,
+      "holding_UAH": 1519692,
+      "lost_UAH": 451852
+    },
+    {
+      "w_spec": 0.5,
+      "test_WAPE": 0.4086,
+      "test_Bias": -0.535,
+      "UAH_cost": 1965844,
+      "holding_UAH": 1512727,
+      "lost_UAH": 453117
+    },
+    {
+      "w_spec": 0.6,
+      "test_WAPE": 0.4088,
+      "test_Bias": -0.539,
+      "UAH_cost": 1966063,
+      "holding_UAH": 1511947,
+      "lost_UAH": 454115
+    },
+    {
+      "w_spec": 0.7,
+      "test_WAPE": 0.4094,
+      "test_Bias": -0.543,
+      "UAH_cost": 1968581,
+      "holding_UAH": 1513196,
+      "lost_UAH": 455384
+    },
+    {
+      "w_spec": 0.8,
+      "test_WAPE": 0.4103,
+      "test_Bias": -0.548,
+      "UAH_cost": 1972864,
+      "holding_UAH": 1516007,
+      "lost_UAH": 456856
+    },
+    {
+      "w_spec": 1.0,
+      "test_WAPE": 0.4132,
+      "test_Bias": -0.557,
+      "UAH_cost": 1987876,
+      "holding_UAH": 1527336,
+      "lost_UAH": 460540
+    }
+  ]
+}

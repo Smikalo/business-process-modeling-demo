@@ -1,0 +1,12 @@
+{
+  "rows": 316498,
+  "cols": 134,
+  "seasonal_features": [
+    "brand_channel_dec_lift",
+    "is_xmas_window",
+    "month_of_year",
+    "months_to_xmas",
+    "sku_dec_lift_lag1y",
+    "y_lag12"
+  ]
+}
