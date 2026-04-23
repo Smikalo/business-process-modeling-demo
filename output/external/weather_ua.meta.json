@@ -1,0 +1,18 @@
+{
+  "source_name": "weather_ua",
+  "fetch_timestamp": "2026-04-23T10:41:56+00:00",
+  "upstream_url": "https://archive-api.open-meteo.com/v1/archive",
+  "row_count": 88,
+  "date_range_min": "2019-01",
+  "date_range_max": "2026-04",
+  "schema_hash": "5537b2a5f2a9aa3d",
+  "signal_cols": [
+    "temp_mean_c",
+    "precip_mm",
+    "snowfall_cm",
+    "temp_anomaly_c",
+    "cold_month_flag",
+    "wet_month_flag"
+  ],
+  "publication_lag_days": 7
+}

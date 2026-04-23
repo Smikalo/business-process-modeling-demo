@@ -1,0 +1,19 @@
+{
+  "source_name": "nbu_fx",
+  "fetch_timestamp": "2026-04-23T10:39:56+00:00",
+  "upstream_url": "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange",
+  "row_count": 88,
+  "date_range_min": "2019-01",
+  "date_range_max": "2026-04",
+  "schema_hash": "aafd2eb04c816498",
+  "signal_cols": [
+    "uah_usd_eom",
+    "uah_eur_eom",
+    "uah_usd_mom_pct",
+    "uah_eur_mom_pct",
+    "uah_usd_yoy_pct",
+    "nbu_policy_rate_eom",
+    "nbu_policy_rate_diff_3m"
+  ],
+  "publication_lag_days": 0
+}

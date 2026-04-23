@@ -3,3 +3,16 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Pytest cache
+.pytest_cache/
+
+# Virtualenvs
+.venv/
+venv/
+

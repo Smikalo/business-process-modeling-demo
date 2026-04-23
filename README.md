@@ -11,10 +11,32 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | V1 LightGBM (regression) | 0.886 | 0.683 | 12.52 | -0.52 |
 | V2 Two-Stage (Tweedie + active filter) | 0.492 | 0.527 | 5.11 | -0.41 |
 | V3 (V2 + 14 new features) | 0.509 | 0.537 | 5.19 | -0.34 |
-| **V4 Creative Ensemble** | **0.490** | **0.509** | **5.13** | -0.51 |
+| V4 Creative Ensemble | 0.490 | 0.509 | 5.13 | -0.51 |
+| **V5 (V4 + 6 external signal loaders)** | 0.472 val / 0.510 test | 0.543 val / 0.573 test | 3.62 val / 5.13 test | — |
 
 **V1 → V4:** WAPE −45%, MAPE −25%, RMSE −59%
 **V3 → V4:** WAPE −3.8%, MAPE −5.3%, RMSE −1.2%
+**V4 → V5 (validation):** WAPE −1.5pp (3.0% relative), RMSE −2.9% relative
+**V4 → V5 (test):** WAPE +0.9pp regression — see ADR-003 for distribution-shift analysis.
+
+### V5 — external signal enrichment
+
+Ten free, regularly-updated data sources were evaluated under a common `BaseSignalLoader` framework (`src/external_data.py`) with automated add-one-source and leave-one-out ablation (`scripts/run_ablation.py`) and a decision-gate report (`scripts/run_decision_gate.py`).
+
+**Kept** (6 loaders, 33 new features):
+
+| Loader | What it adds | Verdict |
+|---|---|---|
+| `conflict_ua` | War-intensity timeline (ACLED fallback) | PASS (val −1.35pp, test −0.59pp) |
+| `nbu_fx` | UAH/USD, UAH/EUR, NBU policy rate | PASS (val −0.94pp) |
+| `holidays_ua` | Ukrainian holidays + gifting-season flags | MARGINAL / LOO-KEEP |
+| `gtrends_ua` | Google Trends toy keywords | LOO-KEEP |
+| `tmdb_movies` | Family/animation releases (toy tie-ins) | MARGINAL |
+| `world_bank_ua` | Demographics + macro (annual, ffilled) | MARGINAL |
+
+**Dropped** (net-harmful on test): `weather_ua`, `school_ua`, `imf_cpi`, `air_raids_ua`.
+
+See `docs/adr-003-external-signals.md` for the full decision record and `output/decision_gate.md` for the per-loader verdict table.
 
 ### V4 creative approaches explored
 
@@ -65,6 +87,10 @@ src/
   model_v4_calibration.py — isotonic + GBDT meta-learner (explored, not shipped)
   optimize.py         — Optuna hyperparameter search
   procurement.py      — multi-horizon forecasts + order recommendations (q50/q90 safety stock)
+  external_data.py    — BaseSignalLoader ABC, Parquet cache, loader registry
+  leakage_guard.py    — enforces publication_lag_days per signal
+  enrichment_external.py — joins registered loaders onto the ABT
+  loaders/            — concrete signal loaders (conflict_ua, nbu_fx, holidays_ua, gtrends_ua, tmdb_movies, world_bank_ua, …)
 
 output/
   abt_v4_cached.parquet          — cached feature-engineered ABT (~10 MB)
@@ -81,6 +107,9 @@ output/
 docs/
   adr-001-training-architecture.md      — zero-cost CPU training decision
   adr-002-ensemble-architecture.md      — V4 convex-blend ensemble decision
+  adr-003-external-signals.md           — V5 external-signal selection decision
+  external-data-sources.md              — survey of free, regularly-updated sources
+  external-data-plan.md                 — original Beads plan for V5
   limitations-and-next-steps.md         — known issues + production roadmap
   v4-creative-approaches.md             — full writeup of creative experiments
 
@@ -94,7 +123,12 @@ data/                                   — raw client data (not committed)
 | `run_pipeline.py` | Original V1 pipeline (ingest → V1 → recommendations + plots) | ~30 min |
 | `run_v4_experiments.py` | Train all V4 base models (V3, PerChannel, LogTarget, Reconciled, baselines) | ~8 min |
 | `run_v4_round2.py` | Post-hoc calibration + GBDT meta-learner experiments | ~1 min |
-| `run_v4_final.py` | **Production V4 ensemble** (recommended) | ~3 min |
+| `run_v4_final.py` | Production V4 ensemble | ~3 min |
+| `scripts/run_ablation.py` | Add-one-source + leave-one-out ablation over external loaders | ~40 s / loader |
+| `scripts/run_decision_gate.py` | Promotes/rejects loaders into the V5 candidate set | <1 s |
+| `scripts/build_v5_abt.py` | Enriches V4 ABT with the decision-gate winners | ~5 s |
+| `scripts/train_v5.py` | **Production V5 model + V4 vs V5 comparison** (recommended) | ~1 min |
+| `scripts/tune_v5_ensemble.py` | Scans V4+V5 blend weights on validation | ~2 min |
 
 ## Quick Start
 
@@ -123,7 +157,11 @@ and `.parquet` files and training artifacts will be unusable until you run
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Production V4 ensemble (recommended)
+# Production V5 (V4 backbone + 6 external signal loaders)
+PYTHONPATH=. python3 -m scripts.build_v5_abt    # cache enriched ABT
+PYTHONPATH=. python3 -m scripts.train_v5        # train + compare to V4
+
+# Or: V4 ensemble (no external signals)
 PYTHONPATH=. python3 run_v4_final.py
 
 # Or: inspect every model side-by-side
@@ -148,6 +186,6 @@ On first run the ABT is built from raw data (~4 min) and cached to `output/abt_v
 - Only 8 months of held-out test data; 5% WAPE gaps are within natural between-month variance.
 - Stock-out periods are flagged but demand is not counterfactually imputed (censored demand estimation not implemented).
 - Three brands of interest (Djeco, CubicFun, Infantino); other 15+ brands in client's ERP not yet included.
-- No external regressors (macro, Google Trends, competitor prices, wartime intensity).
+- V5 external signals lift validation but regress test — see ADR-003; this is the key open item for the next iteration (either additional held-out months or distribution-shift–robust training).
 
 See `docs/limitations-and-next-steps.md` for the full roadmap.

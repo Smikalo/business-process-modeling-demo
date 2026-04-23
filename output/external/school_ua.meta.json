@@ -1,0 +1,18 @@
+{
+  "source_name": "school_ua",
+  "fetch_timestamp": "2026-04-23T10:43:21+00:00",
+  "upstream_url": "Ministry of Education decrees (hardcoded; updated annually)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "eff1f370e824eb18",
+  "signal_cols": [
+    "school_in_session",
+    "back_to_school_month",
+    "winter_school_break",
+    "spring_school_break",
+    "summer_break",
+    "months_until_back_to_school"
+  ],
+  "publication_lag_days": 0
+}

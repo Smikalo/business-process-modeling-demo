@@ -1,0 +1,15 @@
+{
+  "source_name": "air_raids_ua",
+  "fetch_timestamp": "2026-04-23T10:58:56+00:00",
+  "upstream_url": "https://api.ukrainealarm.com + curated fallback",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "965b3953b8576a20",
+  "signal_cols": [
+    "alarm_hours_monthly",
+    "alarm_hours_mom_delta",
+    "high_alarm_month_flag"
+  ],
+  "publication_lag_days": 7
+}

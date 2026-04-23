@@ -1,0 +1,15 @@
+{
+  "source_name": "gtrends_ua",
+  "fetch_timestamp": "2026-04-23T10:45:02+00:00",
+  "upstream_url": "https://trends.google.com (via pytrends)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "56afe7f9e12f7c64",
+  "signal_cols": [
+    "trends_toys_general",
+    "trends_toy_brands",
+    "trends_board_games_puzzles"
+  ],
+  "publication_lag_days": 14
+}

@@ -1,0 +1,16 @@
+{
+  "source_name": "tmdb_movies",
+  "fetch_timestamp": "2026-04-23T10:54:50+00:00",
+  "upstream_url": "https://api.themoviedb.org/3",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "6d39d48a3a8facfa",
+  "signal_cols": [
+    "family_releases_count",
+    "family_releases_influence",
+    "release_next_month",
+    "release_prior_month"
+  ],
+  "publication_lag_days": 0
+}

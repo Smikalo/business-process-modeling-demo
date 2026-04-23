@@ -1,0 +1,16 @@
+{
+  "source_name": "conflict_ua",
+  "fetch_timestamp": "2026-04-23T10:53:03+00:00",
+  "upstream_url": "https://api.acleddata.com/acled/read",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "a1287c0e67429a9e",
+  "signal_cols": [
+    "war_active",
+    "conflict_intensity",
+    "months_since_invasion",
+    "intensity_mom_delta"
+  ],
+  "publication_lag_days": 30
+}

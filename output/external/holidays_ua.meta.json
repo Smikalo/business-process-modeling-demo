@@ -1,0 +1,23 @@
+{
+  "source_name": "holidays_ua",
+  "fetch_timestamp": "2026-04-23T10:34:56+00:00",
+  "upstream_url": "python-holidays library (offline)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "40cc5bbadc10f8d5",
+  "signal_cols": [
+    "holiday_count",
+    "major_holiday_in_month",
+    "is_dec",
+    "days_to_ny",
+    "days_to_st_nicholas",
+    "days_to_womens_day",
+    "days_to_easter",
+    "days_to_childrens_day",
+    "preholiday_dec",
+    "preholiday_nov",
+    "easter_month_flag"
+  ],
+  "publication_lag_days": 0
+}

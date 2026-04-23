@@ -1,0 +1,16 @@
+{
+  "source_name": "world_bank_ua",
+  "fetch_timestamp": "2026-04-23T10:50:56+00:00",
+  "upstream_url": "https://api.worldbank.org/v2",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "746b8681bb66965a",
+  "signal_cols": [
+    "wb_pop_0_14",
+    "wb_fertility",
+    "wb_gdp_growth",
+    "wb_cpi_inflation"
+  ],
+  "publication_lag_days": 365
+}

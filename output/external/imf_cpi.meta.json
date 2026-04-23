@@ -1,0 +1,15 @@
+{
+  "source_name": "imf_cpi",
+  "fetch_timestamp": "2026-04-23T10:57:37+00:00",
+  "upstream_url": "https://dataservices.imf.org/ + curated ukrstat fallback",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "02b3a846c78881a4",
+  "signal_cols": [
+    "cpi_yoy_pct",
+    "cpi_mom_delta",
+    "cpi_high_inflation_flag"
+  ],
+  "publication_lag_days": 30
+}
