@@ -1,22 +1,19 @@
-"""V7 performance dashboard — mirrors ``scripts.viz_v6_performance`` with V7-specific panels.
+"""V7 performance dashboard — mirrors ``scripts.viz_v6_performance`` in layout.
 
-Dashboard (``output/plot_v7_dashboard.png``):
-    1. Monthly totals — actual vs V7 predicted with 80% conformal band (val + test)
-    2. Scatter (predicted vs actual, log)
-    3. Residual violin per month (V6 vs V7)
-    4. WAPE by segment (channel, brand, volume tier)
-    5. α-sweep Pareto — WAPE vs annualised UAH cost
-    6. Top-20 V7 feature importances (red = newly added in V7)
+Dashboard (``output/plot_v7_dashboard.png``, 3×2 grid):
+    1. Monthly totals — actual vs V7 predicted with 80% conformal band
+    2. Scatter (predicted vs actual, log)         |  V7 residual violin per month
+    3. WAPE by segment (channel / brand / tier)   |  WAPE & MAPE_nz across V4…V7
 
-Stand-alone charts:
+Stand-alone V7-specific charts (not in earlier model dashboards):
     output/plot_v7_monthly.png
     output/plot_v7_scatter.png
-    output/plot_v7_residuals.png
-    output/plot_v7_segments.png
-    output/plot_v7_alpha_sweep.png
-    output/plot_v7_cost_breakdown.png
-    output/plot_v7_conformal_coverage.png
-    output/plot_v7_feature_importance.png
+    output/plot_v7_residuals.png           — V6 vs V7 residual violins
+    output/plot_v7_segments.png            — V6 vs V7 per-segment WAPE
+    output/plot_v7_alpha_sweep.png         — cost-vs-accuracy Pareto
+    output/plot_v7_cost_breakdown.png      — V4..V7 UAH cost bars
+    output/plot_v7_conformal_coverage.png  — empirical coverage by channel
+    output/plot_v7_feature_importance.png  — top-20 gain
 
 Run:
     python -m scripts.viz_v7_performance
@@ -187,6 +184,110 @@ def _panel_scatter(ax, df_val: pd.DataFrame, df_test: pd.DataFrame) -> None:
     ax.set_ylabel("predicted qty (+0.5, log)")
     ax.set_title("V7 prediction vs actual (row-level)")
     ax.legend(loc="upper left", markerscale=3)
+
+
+def _panel_residual_violin(ax, df_val: pd.DataFrame, df_test: pd.DataFrame) -> None:
+    """Match V6 dashboard style: V7 residuals per month, blue=val, red=test."""
+    df = pd.concat([df_val, df_test], ignore_index=True)
+    df["residual"] = df["prediction"] - df["target_qty"]
+    df = df[(df["target_qty"] > 0) | (df["prediction"] > 0.1)]
+    order = sorted(df["Период"].unique())
+    data = [df.loc[df["Период"] == p, "residual"].clip(-20, 20).values for p in order]
+    labels = [str(p) for p in order]
+    val_periods = {str(p) for p in df_val["Период"].unique()}
+    parts = ax.violinplot(data, showmeans=True, showextrema=False, widths=0.9)
+    for i, pc in enumerate(parts["bodies"]):
+        pc.set_facecolor("#1f77b4" if labels[i] in val_periods else "#d62728")
+        pc.set_alpha(0.55)
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.set_xticks(range(1, len(labels) + 1))
+    ax.set_xticklabels(labels, rotation=30)
+    ax.set_ylim(-20, 20)
+    ax.set_ylabel("residual (pred − actual), clipped ±20")
+    ax.set_title("V7 residual distribution per month (blue=val, red=test)")
+
+
+def _panel_segment_wape_single(ax, df_val: pd.DataFrame, df_test: pd.DataFrame) -> None:
+    """Match V6 dashboard: V7-only WAPE by segment with coloured facets."""
+    df_both = pd.concat([df_val, df_test], ignore_index=True)
+    rows: list[dict] = []
+    for col in ["Канал", "Бренд", "volume_tier"]:
+        if col not in df_both.columns:
+            continue
+        for key, grp in df_both.groupby(col, observed=True):
+            if len(grp) < 100:
+                continue
+            rows.append({
+                "facet": col, "segment": str(key), "n": len(grp),
+                "wape": _wape(grp["target_qty"].values, grp["prediction"].values),
+            })
+    if not rows:
+        ax.set_axis_off(); ax.set_title("WAPE by segment — no columns found"); return
+    df_seg = pd.DataFrame(rows).sort_values(["facet", "wape"])
+    palette = {"Канал": "#1f77b4", "Бренд": "#2ca02c", "volume_tier": "#ff7f0e"}
+    y_pos = np.arange(len(df_seg))
+    colors = [palette.get(f, "#888") for f in df_seg["facet"]]
+    ax.barh(y_pos, df_seg["wape"], color=colors, alpha=0.85)
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels([f"{r.facet}: {r.segment} (n={r.n:,})" for r in df_seg.itertuples()],
+                       fontsize=8)
+    ax.set_xlabel("WAPE")
+    ax.set_title("WAPE by segment (V7, val+test)")
+    ax.axvline(_wape(df_both["target_qty"].values, df_both["prediction"].values),
+               color="black", linewidth=1, linestyle="--", label="overall V7")
+    ax.legend(loc="lower right")
+
+
+def _panel_model_comparison(ax) -> None:
+    """Match V6 dashboard style: WAPE & MAPE_nz across V4/V5/V6/V7."""
+    frames = []
+    for p in (METRICS_V5, METRICS_V6, METRICS_V7):
+        if p.exists():
+            frames.append(pd.read_csv(p))
+    if not frames:
+        ax.set_axis_off(); ax.set_title("Metrics CSVs missing"); return
+    combined = pd.concat(frames, ignore_index=True)
+    if "V4" not in set(combined["model"]):
+        try:
+            v4_val = pd.read_csv(OUT / "preds_v4_val.csv")
+            v4_test = pd.read_csv(OUT / "preds_v4_test.csv")
+            rows = []
+            for split, df in [("val", v4_val), ("test", v4_test)]:
+                m = compute_all_metrics(df["target_qty"].values, df["prediction"].values)
+                rows.append({"model": "V4", "split": split, **m})
+            combined = pd.concat([pd.DataFrame(rows), combined], ignore_index=True)
+        except FileNotFoundError:
+            pass
+
+    # Use V7_cal variant from v7_metrics.csv as the headline V7 row
+    combined = combined[~((combined["model"] == "V7") & (combined["model"] != "V7"))]
+    v7 = combined[combined["model"].str.startswith("V7")]
+    if not v7.empty and "V7_cal" in set(v7["model"]):
+        combined = combined[~combined["model"].str.startswith("V7")]
+        cal = v7[v7["model"] == "V7_cal"].copy()
+        cal["model"] = "V7"
+        combined = pd.concat([combined, cal], ignore_index=True)
+
+    order = ["V4", "V5", "V6", "V7"]
+    combined = combined[combined["model"].isin(order)]
+    combined["model"] = pd.Categorical(combined["model"], categories=order, ordered=True)
+    combined["split"] = pd.Categorical(combined["split"], categories=["val", "test"], ordered=True)
+    combined = combined.sort_values(["model", "split"]).reset_index(drop=True)
+
+    labels = [f"{r['model']}-{r['split']}" for _, r in combined.iterrows()]
+    wape_vals = combined["WAPE"].values
+    mape_vals = combined["MAPE_nz"].values
+    x = np.arange(len(labels))
+    w = 0.4
+    ax.bar(x - w/2, wape_vals, w, label="WAPE", color="#1f77b4", alpha=0.85)
+    ax.bar(x + w/2, mape_vals, w, label="MAPE_nz", color="#ff7f0e", alpha=0.85)
+    for xi, v in zip(x - w/2, wape_vals):
+        ax.text(xi, v + 0.005, f"{v:.3f}", ha="center", fontsize=7)
+    for xi, v in zip(x + w/2, mape_vals):
+        ax.text(xi, v + 0.005, f"{v:.3f}", ha="center", fontsize=7)
+    ax.set_xticks(x); ax.set_xticklabels(labels, rotation=25, ha="right", fontsize=8)
+    ax.set_title("WAPE & MAPE_nz across models / splits")
+    ax.legend(loc="upper right", fontsize=8)
 
 
 def _panel_residual_vs_v6(ax, df_val: pd.DataFrame, df_test: pd.DataFrame) -> None:
@@ -386,36 +487,36 @@ def main() -> int:
     log.info("V7 val: %s", m_val)
     log.info("V7 test: %s", m_test)
 
-    fig = plt.figure(figsize=(19, 16))
-    gs = gridspec.GridSpec(4, 2, figure=fig, hspace=0.55, wspace=0.28,
-                           height_ratios=[1.0, 1.1, 1.1, 1.3])
+    # ── Dashboard: 3×2 layout matching scripts.viz_v6_performance ──────────
+    fig = plt.figure(figsize=(18, 14))
+    gs = gridspec.GridSpec(3, 2, figure=fig, hspace=0.45, wspace=0.25)
     fig.suptitle(
         f"V7 demand-forecasting dashboard  |  "
-        f"val WAPE={m_val['WAPE']:.3f}  Bias={m_val['Bias']:+.2f}  |  "
-        f"test WAPE={m_test['WAPE']:.3f}  Bias={m_test['Bias']:+.2f}",
-        fontsize=13, y=0.997,
+        f"val WAPE={m_val['WAPE']:.3f}  MAPE_nz={m_val['MAPE_nz']:.3f}  |  "
+        f"test WAPE={m_test['WAPE']:.3f}  MAPE_nz={m_test['MAPE_nz']:.3f}",
+        fontsize=13, y=0.995,
     )
     _panel_monthly(fig.add_subplot(gs[0, :]), df_val, df_test)
     _panel_scatter(fig.add_subplot(gs[1, 0]), df_val, df_test)
-    _panel_residual_vs_v6(fig.add_subplot(gs[1, 1]), df_val, df_test)
-    _panel_segment_wape(fig.add_subplot(gs[2, 0]), df_val, df_test)
-    _panel_alpha_sweep(fig.add_subplot(gs[2, 1]))
-    _panel_cost_breakdown(fig.add_subplot(gs[3, 0]))
-    _panel_feature_importance(fig.add_subplot(gs[3, 1]))
+    _panel_residual_violin(fig.add_subplot(gs[1, 1]), df_val, df_test)
+    _panel_segment_wape_single(fig.add_subplot(gs[2, 0]), df_val, df_test)
+    _panel_model_comparison(fig.add_subplot(gs[2, 1]))
     fig.savefig(DASHBOARD_PNG, bbox_inches="tight")
     log.info("Dashboard → %s", DASHBOARD_PNG)
+    plt.close(fig)
 
-    # Stand-alone plots
+    # ── Standalone charts matching earlier versions' style ─────────────────
     for fn, size, plotter in [
-        (MONTHLY_PNG, (12, 4.5), _panel_monthly),
+        (MONTHLY_PNG, (11, 4), _panel_monthly),
         (SCATTER_PNG, (7, 7), _panel_scatter),
-        (RESID_PNG, (13, 5), _panel_residual_vs_v6),
-        (SEGMENTS_PNG, (11, 9), _panel_segment_wape),
+        (SEGMENTS_PNG, (10, 9), _panel_segment_wape),      # V6-vs-V7 variant
+        (RESID_PNG, (13, 5), _panel_residual_vs_v6),       # V6-vs-V7 variant
     ]:
         f, a = plt.subplots(figsize=size)
         plotter(a, df_val, df_test)
         f.savefig(fn, bbox_inches="tight"); log.info("→ %s", fn); plt.close(f)
 
+    # ── V7-specific extras (not on the main dashboard) ─────────────────────
     for fn, size, plotter in [
         (ALPHA_PNG, (8, 6), _panel_alpha_sweep),
         (COST_PNG, (10, 5.5), _panel_cost_breakdown),
