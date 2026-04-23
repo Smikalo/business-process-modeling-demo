@@ -1,0 +1,101 @@
+{
+  "config": {
+    "abt": "/Users/m.kozyrev/Desktop/business-process-modeling-demo/output/abt_v6_cached.parquet",
+    "target": "target_qty_imputed",
+    "reg_objective": "pinball",
+    "reg_objective_kwargs": {
+      "alpha": 0.6
+    },
+    "n_origins": 6,
+    "num_boost_round": 600
+  },
+  "per_origin": [
+    {
+      "WAPE": 0.5045,
+      "MAPE_nz": 0.6234,
+      "RMSE": 3.1542,
+      "Bias": 0.6067,
+      "origin": "2025-09",
+      "n_train": 217817,
+      "n_test": 3251,
+      "n_test_full": 4277,
+      "actual_sum": 11430.0,
+      "pred_sum": 13402.274130011392,
+      "fit_seconds": 13.2
+    },
+    {
+      "WAPE": 0.4409,
+      "MAPE_nz": 0.5404,
+      "RMSE": 3.5751,
+      "Bias": -0.048,
+      "origin": "2025-10",
+      "n_train": 227528,
+      "n_test": 3346,
+      "n_test_full": 4277,
+      "actual_sum": 14238.0,
+      "pred_sum": 14077.533853818157,
+      "fit_seconds": 10.8
+    },
+    {
+      "WAPE": 0.4235,
+      "MAPE_nz": 0.5478,
+      "RMSE": 5.2793,
+      "Bias": -0.3751,
+      "origin": "2025-11",
+      "n_train": 241224,
+      "n_test": 3496,
+      "n_test_full": 4277,
+      "actual_sum": 18096.0,
+      "pred_sum": 16784.516991765937,
+      "fit_seconds": 18.4
+    },
+    {
+      "WAPE": 0.402,
+      "MAPE_nz": 0.7403,
+      "RMSE": 8.7931,
+      "Bias": 0.851,
+      "origin": "2025-12",
+      "n_train": 252910,
+      "n_test": 3613,
+      "n_test_full": 4277,
+      "actual_sum": 33507.0,
+      "pred_sum": 36581.520518612175,
+      "fit_seconds": 16.8
+    },
+    {
+      "WAPE": 0.4071,
+      "MAPE_nz": 0.5762,
+      "RMSE": 3.7055,
+      "Bias": -0.1819,
+      "origin": "2026-01",
+      "n_train": 268309,
+      "n_test": 3779,
+      "n_test_full": 4277,
+      "actual_sum": 15308.0,
+      "pred_sum": 14620.412876616894,
+      "fit_seconds": 33.5
+    },
+    {
+      "WAPE": 0.4231,
+      "MAPE_nz": 0.4813,
+      "RMSE": 2.485,
+      "Bias": -0.3636,
+      "origin": "2026-02",
+      "n_train": 288648,
+      "n_test": 4009,
+      "n_test_full": 4277,
+      "actual_sum": 10052.0,
+      "pred_sum": 8594.298680560483,
+      "fit_seconds": 18.1
+    }
+  ],
+  "aggregates": {
+    "WAPE_mean": 0.4335166666666666,
+    "WAPE_std": 0.03413973328672747,
+    "WAPE_selection_score": 0.45058653331003035,
+    "MAPE_nz_mean": 0.5849,
+    "RMSE_mean": 4.4987,
+    "Bias_mean": 0.08151666666666667,
+    "Bias_std": 0.47621995414117435
+  }
+}

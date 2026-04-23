@@ -1,0 +1,19 @@
+{
+  "parent": "abt_v5_cached.parquet",
+  "total_rows": 316498,
+  "total_cols": 117,
+  "feature_count": 102,
+  "new_features_added": [
+    "was_censored",
+    "promo_duration_months",
+    "promo_depth_pct_current",
+    "months_since_last_promo",
+    "months_until_next_promo",
+    "post_promo_depletion_flag",
+    "sku_promo_sensitivity"
+  ],
+  "imputation": {
+    "strategy": "stockout_orc",
+    "share_censored": 0.021557798153542834
+  }
+}

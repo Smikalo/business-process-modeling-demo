@@ -12,12 +12,13 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | V2 Two-Stage (Tweedie + active filter) | 0.492 | 0.527 | 5.11 | -0.41 |
 | V3 (V2 + 14 new features) | 0.509 | 0.537 | 5.19 | -0.34 |
 | V4 Creative Ensemble | 0.490 | 0.509 | 5.13 | -0.51 |
-| **V5 (V4 + 6 external signal loaders)** | 0.472 val / 0.510 test | 0.543 val / 0.573 test | 3.62 val / 5.13 test | — |
+| V5 (V4 + 6 external signal loaders) | 0.472 val / 0.510 test | 0.543 val / 0.573 test | 3.62 val / 5.13 test | — |
+| **V6 (imputation + promo-lifecycle + pinball-q60)** | **0.440 val / 0.449 test** | 0.600 val / 0.648 test | 4.20 val / 4.76 test | +0.34 val / +0.41 test |
 
-**V1 → V4:** WAPE −45%, MAPE −25%, RMSE −59%
-**V3 → V4:** WAPE −3.8%, MAPE −5.3%, RMSE −1.2%
-**V4 → V5 (validation):** WAPE −1.5pp (3.0% relative), RMSE −2.9% relative
-**V4 → V5 (test):** WAPE +0.9pp regression — see ADR-003 for distribution-shift analysis.
+**V1 → V4:** WAPE −45 %, MAPE −25 %, RMSE −59 %
+**V4 → V5 (validation):** WAPE −1.5 pp, RMSE −2.9 % relative
+**V4 → V5 (test):** WAPE +0.9 pp regression — see ADR-003 for distribution-shift analysis.
+**V5 → V6 (fixed test):** WAPE **−2.8 pp** (0.478 → 0.449) and rolling-origin WAPE std **−42 %** — see ADR-004.
 
 ### V5 — external signal enrichment
 
@@ -37,6 +38,22 @@ Ten free, regularly-updated data sources were evaluated under a common `BaseSign
 **Dropped** (net-harmful on test): `weather_ua`, `school_ua`, `imf_cpi`, `air_raids_ua`.
 
 See `docs/adr-003-external-signals.md` for the full decision record and `output/decision_gate.md` for the per-loader verdict table.
+
+### V6 — imputation, promo lifecycle, cost-calibrated loss
+
+Three structural upgrades stacked on V5:
+
+1. **Censored-demand imputation** (`src/demand_imputation.py`). Rows where `target_qty = 0 ∧ stockout_orc = 1 ∧ demand_density ≥ 0.3` (≈ 2.2 % of the ABT) get their label replaced with an EB-shrunk brand × channel × month baseline; a new boolean feature `was_censored` tags the row. The classifier keeps using raw `target_qty`; only the regressor sees `target_qty_imputed`.
+2. **Promo-lifecycle features** (`src/features_promo.py`): `promo_duration_months`, `promo_depth_pct_current`, `months_since_last_promo`, `months_until_next_promo`, `post_promo_depletion_flag`, `sku_promo_sensitivity` (EB-shrunk per-SKU uplift ratio).
+3. **Quantile (pinball) loss at α = 0.6** on the regression stage (LightGBM built-in `objective="quantile"`). The stage-1 binary classifier is unchanged. `TwoStageForecaster` now accepts `reg_objective` and `target_col` kwargs dispatched via `src.losses.resolve_objective` — custom asymmetric and pinball objectives are also available for TFT experiments.
+
+Validation is moved to a **rolling-origin CV harness** (`scripts/rolling_origin_cv.py`) with `score = mean + 0.5·std` across six origins. V6 scores **0.434 mean WAPE ± 0.034** (selection score 0.451), a 4.1 pp improvement and 42 % variance reduction over V5.
+
+A dedicated **UAH cost scorecard** (`scripts/decision_cost_scorecard.py`) evaluates each model under realistic holding (22 %), margin (28 %), and back-order recovery (50 %) assumptions. V6's lost-margin bucket is 0.90 M UAH vs V5's 1.17 M and V4's 1.28 M — the cheap-to-fix side wins.
+
+Free-GPU workflow (`docs/gpu-workflow.md`, `scripts/push_to_kaggle.sh`, `notebooks/v6_*.ipynb`) lets any Optuna retune or TFT prototype run on Kaggle's T4×2 or Colab's T4 with one command push-up and pull-back.
+
+Full ADR: `docs/adr-004-v6.md`. Executive report: `docs/v6_final_report.md`. Visuals: `output/plot_v6_dashboard.png` and `output/plot_model_progression.png`.
 
 ### V4 creative approaches explored
 
@@ -91,6 +108,9 @@ src/
   leakage_guard.py    — enforces publication_lag_days per signal
   enrichment_external.py — joins registered loaders onto the ABT
   loaders/            — concrete signal loaders (conflict_ua, nbu_fx, holidays_ua, gtrends_ua, tmdb_movies, world_bank_ua, …)
+  demand_imputation.py — V6: censored-demand imputation (stockout mask + EB-shrunk SKU factor)
+  features_promo.py   — V6: promo-lifecycle features (duration, post-promo depletion, sensitivity)
+  losses.py           — V6: pinball + asymmetric LightGBM objectives (resolve_objective)
 
 output/
   abt_v4_cached.parquet          — cached feature-engineered ABT (~10 MB)
@@ -108,6 +128,9 @@ docs/
   adr-001-training-architecture.md      — zero-cost CPU training decision
   adr-002-ensemble-architecture.md      — V4 convex-blend ensemble decision
   adr-003-external-signals.md           — V5 external-signal selection decision
+  adr-004-v6.md                         — V6 imputation + promo-lifecycle + pinball loss decision
+  gpu-workflow.md                       — free-GPU (Kaggle / Colab) workflow for V6
+  v6_final_report.md                    — one-page executive summary of V6
   external-data-sources.md              — survey of free, regularly-updated sources
   external-data-plan.md                 — original Beads plan for V5
   limitations-and-next-steps.md         — known issues + production roadmap
@@ -129,6 +152,15 @@ data/                                   — raw client data (not committed)
 | `scripts/build_v5_abt.py` | Enriches V4 ABT with the decision-gate winners | ~5 s |
 | `scripts/train_v5.py` | **Production V5 model + V4 vs V5 comparison** (recommended) | ~1 min |
 | `scripts/tune_v5_ensemble.py` | Scans V4+V5 blend weights on validation | ~2 min |
+| `scripts/viz_v5_performance.py` | 6-panel V5 dashboard (monthly fit, scatter, residuals, segments, V4/V5, feature importances) | ~10 s |
+| `scripts/build_v6_abt.py` | V6 ABT: adds imputation + promo-lifecycle features to V5 ABT | ~5 s |
+| `scripts/train_v6.py` | **Production V6 model** — pinball q60 + imputed target + V5 features | ~30 s |
+| `scripts/rolling_origin_cv.py` | Rolling-origin CV harness (6-12 origins); selection score `mean + 0.5σ` | ~2 min / 6 origins |
+| `scripts/decision_cost_scorecard.py` | UAH cost scorecard across V4/V5/V6/naive | <5 s |
+| `scripts/viz_v6_performance.py` | 6-panel V6 dashboard | ~5 s |
+| `scripts/viz_model_progression.py` | V4 vs V5 vs V6 progression (bars, monthly WAPE, rolling box, UAH cost, segment heatmap, residual density) | ~5 s |
+| `scripts/generate_baseline_preds.py` | Re-emits V4/V5 predictions on the fixed split for the cost scorecard | ~30 s |
+| `scripts/push_to_kaggle.sh` | Uploads V6 ABT + source tree as a Kaggle dataset for GPU runs | ~30 s |
 
 ## Quick Start
 
@@ -157,9 +189,20 @@ and `.parquet` files and training artifacts will be unusable until you run
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Production V5 (V4 backbone + 6 external signal loaders)
-PYTHONPATH=. python3 -m scripts.build_v5_abt    # cache enriched ABT
-PYTHONPATH=. python3 -m scripts.train_v5        # train + compare to V4
+# Production V6 (V5 backbone + imputation + promo-lifecycle + pinball loss)
+PYTHONPATH=. python3 -m scripts.build_v5_abt          # V5 ABT (prereq)
+PYTHONPATH=. python3 -m scripts.build_v6_abt          # V6 ABT
+PYTHONPATH=. python3 -m scripts.train_v6              # train + compare to V5
+PYTHONPATH=. python3 -m scripts.rolling_origin_cv \
+    --abt output/abt_v6_cached.parquet \
+    --target target_qty_imputed --reg-objective pinball --alpha 0.6
+PYTHONPATH=. python3 -m scripts.generate_baseline_preds    # V4 + V5 preds for the scorecard
+PYTHONPATH=. python3 -m scripts.decision_cost_scorecard    # UAH cost scorecard
+PYTHONPATH=. python3 -m scripts.viz_v6_performance         # V6 dashboard
+PYTHONPATH=. python3 -m scripts.viz_model_progression      # V4 vs V5 vs V6
+
+# Or: V5 only (V4 backbone + 6 external signal loaders)
+PYTHONPATH=. python3 -m scripts.train_v5
 
 # Or: V4 ensemble (no external signals)
 PYTHONPATH=. python3 run_v4_final.py

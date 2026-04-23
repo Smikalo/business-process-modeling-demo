@@ -1,0 +1,8 @@
+{
+  "n_rows": 316498,
+  "n_censored": 6823,
+  "share_censored": 0.021557798153542834,
+  "mean_imputed_qty": 3.2120106984662082,
+  "strategy": "stockout_orc",
+  "censor_density_min": 0.3
+}

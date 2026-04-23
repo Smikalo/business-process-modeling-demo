@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from src.evaluation import compute_all_metrics, get_feature_columns, wape
+from src.losses import resolve_objective
 
 log = logging.getLogger(__name__)
 
@@ -98,6 +99,7 @@ def get_feature_columns_v2(df: pd.DataFrame) -> list[str]:
     """Feature columns including categoricals."""
     exclude = {
         "Период", "Партнер", "Артикул", "target_qty",
+        "target_qty_imputed",  # V6: imputed target (leakage if used as a feature)
         "Количество_sales", "Выручка_sales", "Количество_ship", "Выручка_ship",
         "Количество_tt", "Стоимость_tt", "Количество_orc", "Стоимость_orc",
         "Количество_receipts", "ЦенаВВалюте", "implied_unit_price", "Номенклатура",
@@ -114,7 +116,17 @@ class TwoStageForecaster:
     Final prediction = P(nonzero) × E[qty | nonzero].
     """
 
-    def __init__(self, clf_params: dict | None = None, reg_params: dict | None = None):
+    def __init__(
+        self,
+        clf_params: dict | None = None,
+        reg_params: dict | None = None,
+        reg_objective: str | None = None,
+        reg_objective_kwargs: dict | None = None,
+        target_col: str = "target_qty",
+    ):
+        self.reg_objective_name = reg_objective
+        self.reg_objective_kwargs = dict(reg_objective_kwargs or {})
+        self.target_col = target_col
         self.clf_params = {
             "objective": "binary",
             "metric": "binary_logloss",
@@ -160,9 +172,14 @@ class TwoStageForecaster:
         self.feature_cols = feature_cols
         t0 = time.time()
 
+        # Stage 1 always uses raw target_qty (censor-aware imputed targets can
+        # keep tiny positive values which we still want classified as "has demand").
+        clf_target = "target_qty"
+        reg_target = self.target_col
+
         # Stage 1: binary classifier
-        y_clf_train = (df_train["target_qty"] > 0).astype(int)
-        y_clf_val = (df_val["target_qty"] > 0).astype(int)
+        y_clf_train = (df_train[clf_target] > 0).astype(int)
+        y_clf_val = (df_val[clf_target] > 0).astype(int)
 
         ts1 = lgb.Dataset(df_train[feature_cols], label=y_clf_train, categorical_feature="auto")
         vs1 = lgb.Dataset(df_val[feature_cols], label=y_clf_val, categorical_feature="auto")
@@ -175,25 +192,34 @@ class TwoStageForecaster:
         log.info("Stage 1 (classifier): %d rounds in %.1fs",
                  self.clf.current_iteration(), time.time() - t0)
 
-        # Stage 2: Tweedie regressor on positive-demand rows only
+        # Stage 2: regressor on positive-demand rows only
         t1 = time.time()
-        mask_train = df_train["target_qty"] > 0
-        mask_val = df_val["target_qty"] > 0
+        mask_train = df_train[clf_target] > 0
+        mask_val = df_val[clf_target] > 0
 
         ts2 = lgb.Dataset(
             df_train.loc[mask_train, feature_cols],
-            label=df_train.loc[mask_train, "target_qty"],
+            label=df_train.loc[mask_train, reg_target],
             categorical_feature="auto",
         )
         vs2 = lgb.Dataset(
             df_val.loc[mask_val, feature_cols],
-            label=df_val.loc[mask_val, "target_qty"],
+            label=df_val.loc[mask_val, reg_target],
             categorical_feature="auto",
         )
 
+        reg_params = dict(self.reg_params)
+        fobj, feval, overrides = resolve_objective(
+            self.reg_objective_name or "", **self.reg_objective_kwargs
+        )
+        reg_params.update(overrides)
+        if fobj is not None:
+            reg_params["objective"] = fobj
+
         self.reg = lgb.train(
-            self.reg_params, ts2, num_boost_round,
+            reg_params, ts2, num_boost_round,
             valid_sets=[vs2],
+            feval=feval,
             callbacks=[lgb.early_stopping(early_stopping), lgb.log_evaluation(200)],
         )
         log.info("Stage 2 (regressor): %d rounds in %.1fs",
