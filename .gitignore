@@ -16,3 +16,8 @@ __pycache__/
 .venv/
 venv/
 
+.env
+
+# Kaggle kernel outputs (local mirror only; pulled on demand)
+output/gpu/
+

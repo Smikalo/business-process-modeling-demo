@@ -51,7 +51,7 @@ Validation is moved to a **rolling-origin CV harness** (`scripts/rolling_origin_
 
 A dedicated **UAH cost scorecard** (`scripts/decision_cost_scorecard.py`) evaluates each model under realistic holding (22 %), margin (28 %), and back-order recovery (50 %) assumptions. V6's lost-margin bucket is 0.90 M UAH vs V5's 1.17 M and V4's 1.28 M — the cheap-to-fix side wins.
 
-Free-GPU workflow (`docs/gpu-workflow.md`, `scripts/push_to_kaggle.sh`, `notebooks/v6_*.ipynb`) lets any Optuna retune or TFT prototype run on Kaggle's T4×2 or Colab's T4 with one command push-up and pull-back.
+Free-GPU workflow (`docs/gpu-workflow.md`) is wired to Kaggle's free T4×2 kernels and is driven entirely by the Kaggle API token in repo-root `.env` (new `KGAT_…` bearer form or legacy `KAGGLE_USERNAME`/`KAGGLE_KEY`). Three scripts — `scripts/push_to_kaggle.sh`, `scripts/push_kaggle_kernel.sh`, `scripts/pull_kaggle_kernel_output.sh` — push the ABT as a private dataset, queue the training notebook as a GPU kernel, and pull artefacts back into `output/gpu/`. No browser clicks, no billing: Kaggle kernels have no paid tier, and the 30 GPU-hours/week quota resets automatically.
 
 Full ADR: `docs/adr-004-v6.md`. Executive report: `docs/v6_final_report.md`. Visuals: `output/plot_v6_dashboard.png` and `output/plot_model_progression.png`.
 
@@ -160,7 +160,9 @@ data/                                   — raw client data (not committed)
 | `scripts/viz_v6_performance.py` | 6-panel V6 dashboard | ~5 s |
 | `scripts/viz_model_progression.py` | V4 vs V5 vs V6 progression (bars, monthly WAPE, rolling box, UAH cost, segment heatmap, residual density) | ~5 s |
 | `scripts/generate_baseline_preds.py` | Re-emits V4/V5 predictions on the fixed split for the cost scorecard | ~30 s |
-| `scripts/push_to_kaggle.sh` | Uploads V6 ABT + source tree as a Kaggle dataset for GPU runs | ~30 s |
+| `scripts/push_to_kaggle.sh` | Uploads V6 ABT + source tree as a private Kaggle dataset (reads `KAGGLE_API_TOKEN` from `.env`) | ~30 s |
+| `scripts/push_kaggle_kernel.sh` | Publishes `notebooks/v6_gpu_template.ipynb` as a private Kaggle kernel with GPU enabled and queues a run | ~15 s to queue |
+| `scripts/pull_kaggle_kernel_output.sh` | Polls the kernel until it finishes and downloads `/kaggle/working/*` into `output/gpu/` | depends on kernel runtime |
 
 ## Quick Start
 
