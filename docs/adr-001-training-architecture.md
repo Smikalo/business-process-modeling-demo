@@ -12,15 +12,18 @@ Use **LightGBM (CPU-only gradient-boosted trees)** as the primary model family. 
 
 ### Why LightGBM on CPU is sufficient
 
-| Factor | Value |
-|--------|-------|
-| Dataset size | ~2.8M rows × ~60 features after engineering |
+| Factor | Value (as measured on V4) |
+|--------|---------------------------|
+| Dataset size (pre-filter) | ~2.8M rows × ~60 features after engineering |
+| Dataset size (active-pair filter, V2+) | ~480k rows × ~75 features |
 | Raw data on disk | ~50 MB |
-| In-memory (feature-expanded) | ~500 MB–1 GB |
-| Single training run | 3–5 min on laptop (M1/M2 or modern Intel, 16 GB RAM) |
-| 3-fold time-series CV | ~15 min |
-| Optuna hyperparameter search (100 trials) | 4–8 hours (run overnight) |
-| Model artifact size | < 10 MB (joblib) |
+| In-memory (feature-expanded, filtered) | ~120 MB |
+| ABT build (ingest + features, first run) | ~4 min (cached thereafter) |
+| V1 single training run | ~40 s |
+| V2 / V3 single training run | ~70-90 s |
+| **V4 ensemble training (3 models)** | **~3 min** |
+| Optuna hyperparameter search (30 trials) | ~12 min |
+| Model artifact size (V4 ensemble) | ~8 MB (joblib) |
 
 LightGBM uses all CPU cores via `n_jobs=-1` and OpenMP (`libomp`). No GPU dependency anywhere in the codebase.
 
@@ -45,14 +48,23 @@ None of these are expected to be needed for the PoC.
 
 | Activity | Time | Cost |
 |----------|------|------|
-| Full pipeline run (ingest → features → train → eval) | ~30 min | $0 |
-| Optuna search (100 trials) | 4–8 h | $0 |
+| ABT build (ingest → features → cache), first run | ~4 min | $0 |
+| ABT build, cached runs | ~2 s (parquet load) | $0 |
+| V4 ensemble training (3 base models + SLSQP weights) | ~3 min | $0 |
+| V4 inference on test set (34k rows) | <1 s | $0 |
+| Optuna search (30 trials) | ~12 min | $0 |
 | Multi-horizon models (h=1,3,6 × point + quantile) | ~40 min | $0 |
-| **Total** | **< 10 h** | **$0** |
+| **Full end-to-end pipeline (first run)** | **~25 min** | **$0** |
+| **Subsequent runs (cache hit)** | **~5 min** | **$0** |
 
 ## Consequences
 
 - No `torch`, `tensorflow`, or GPU-related imports anywhere.
 - `requirements.txt` contains only CPU-compatible packages.
 - Pipeline is fully reproducible on any laptop with Python 3.11+ and 8 GB RAM.
+- The cached ABT (`output/abt_v4_cached.parquet`, ~10 MB) makes iteration fast — retraining a base model with a new feature does not re-run ingestion.
 - If the client later wants to scale to all 20 brands (~10× data), LightGBM on CPU still handles it in ~30–50 min per training run. GPU becomes relevant only beyond ~100 M rows.
+
+## Scope update (V4)
+
+The original decision (V1-V3) assumed a single LightGBM model family. V4 extends this to an **ensemble of LightGBM models** (V3 Tweedie + LogTarget MAE + PerChannel specialists). This does not change the zero-cost / CPU-only premise — all three components are LightGBM boosters; they train serially on the same hardware with total runtime still well under 5 min. See `docs/adr-002-ensemble-architecture.md` for the ensemble rationale.
