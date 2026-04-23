@@ -1,0 +1,64 @@
+{
+  "champion": "v71_rec95_chblend",
+  "recency_gamma": 0.95,
+  "blend_weight_specialist": 0.6,
+  "UAH_cost": 1316197,
+  "holding_UAH": 1014225,
+  "lost_UAH": 301971,
+  "sweep": [
+    {
+      "w_spec": 0.0,
+      "total_UAH": 1355954,
+      "holding_UAH": 1053495,
+      "lost_UAH": 302459
+    },
+    {
+      "w_spec": 0.2,
+      "total_UAH": 1334175,
+      "holding_UAH": 1032939,
+      "lost_UAH": 301235
+    },
+    {
+      "w_spec": 0.3,
+      "total_UAH": 1326505,
+      "holding_UAH": 1025520,
+      "lost_UAH": 300984
+    },
+    {
+      "w_spec": 0.4,
+      "total_UAH": 1320964,
+      "holding_UAH": 1019990,
+      "lost_UAH": 300973
+    },
+    {
+      "w_spec": 0.5,
+      "total_UAH": 1317566,
+      "holding_UAH": 1016244,
+      "lost_UAH": 301321
+    },
+    {
+      "w_spec": 0.6,
+      "total_UAH": 1316197,
+      "holding_UAH": 1014225,
+      "lost_UAH": 301971
+    },
+    {
+      "w_spec": 0.7,
+      "total_UAH": 1316881,
+      "holding_UAH": 1014002,
+      "lost_UAH": 302878
+    },
+    {
+      "w_spec": 0.8,
+      "total_UAH": 1319569,
+      "holding_UAH": 1015558,
+      "lost_UAH": 304010
+    },
+    {
+      "w_spec": 1.0,
+      "total_UAH": 1331612,
+      "holding_UAH": 1024486,
+      "lost_UAH": 307125
+    }
+  ]
+}

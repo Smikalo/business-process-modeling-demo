@@ -14,13 +14,15 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | V4 Creative Ensemble | 0.490 | 0.509 | 5.13 | -0.51 |
 | V5 (V4 + 6 external signal loaders) | 0.472 val / 0.510 test | 0.543 val / 0.573 test | 3.62 val / 5.13 test | — |
 | V6 (imputation + promo-lifecycle + pinball-q60) | 0.440 val / 0.449 test | 0.600 val / 0.648 test | 4.20 val / 4.76 test | +0.34 val / +0.41 test |
-| **V7 (price + cohort + cost-calibrated α + stacking + conformal)** | **0.420 val / 0.421 test** | 0.531 val / 0.551 test | 4.32 val / 5.03 test | −0.37 val / −0.46 test |
+| V7 (price + cohort + cost-calibrated α + stacking + conformal) | 0.420 val / 0.421 test | 0.531 val / 0.551 test | 4.32 val / 5.03 test | −0.37 val / −0.46 test |
+| **V7.1 (V7 + recency weights γ=0.95 + per-channel specialists w=0.6)** | **0.412 val / 0.412 test** | **0.484 val / 0.490 test** | — | −0.54 val / −0.56 test |
 
 **V1 → V4:** WAPE −45 %, MAPE −25 %, RMSE −59 %
 **V4 → V5 (validation):** WAPE −1.5 pp, RMSE −2.9 % relative
 **V4 → V5 (test):** WAPE +0.9 pp regression — see ADR-003 for distribution-shift analysis.
 **V5 → V6 (fixed test):** WAPE **−2.8 pp** (0.478 → 0.449) and rolling-origin WAPE std **−42 %** — see ADR-004.
 **V6 → V7 (fixed test):** WAPE **−2.9 pp** (0.449 → 0.421, **−6.4 % relative**) and annualised UAH cost **−32 %** (2.07 M → 1.40 M) with the cost scorecard rewritten to use per-SKU *realised* margins — see ADR-005.
+**V7 → V7.1 (fixed test):** WAPE **−0.9 pp** (0.421 → 0.412) and annualised UAH cost **−6.2 %** (1.40 M → 1.32 M, −87 K UAH) via recency sample weights (γ=0.95) and per-channel specialists blended at w=0.6 with the global model — see ADR-006.
 
 ### V5 — external signal enrichment
 
@@ -68,6 +70,17 @@ V7 stacks five orthogonal upgrades on V6:
 5. **Isotonic classifier calibration + V4+V5+V6+V7 ridge stacker + per-(brand, channel) conformal intervals** (`src/v7_components.py`). The ridge meta-learner uses positive weights and is fit on the held-out last 40 % of the validation window. The conformal calibrator emits 10/90 interval files alongside the point forecast for every prediction.
 
 Artefacts: `output/model_v7.joblib`, `output/preds_v7_{val,test,lower,upper,stacked}_*.csv`, `output/v7_metrics.csv`, `output/v7_rolling_cv.{json,md}`, `output/cost_scorecard_final.{md,json}`. Full ADR: `docs/adr-005-v7.md`. Executive report: `docs/v7_final_report.md`.
+
+### V7.1 — recency weights + per-channel specialists
+
+V7.1 layers two targeted upgrades on top of V7 after a six-way A/B ablation (`scripts/ablate_v71.py`, `scripts/sweep_channel_blend.py`, `output/v71_ablation.csv`, `output/v71_channel_blend_sweep.csv`):
+
+1. **Recency sample weights** (`src/v71_components.build_recency_weights`). `w_i = clip(γ^months_ago, 0.25, 1.0)` on both stages of `TwoStageForecaster`. Sweep on γ ∈ {0.93, 0.95, 0.97, 0.99} picked **γ=0.95** as cost-optimal (−47 K UAH, −3.4 %). 2020 rows retain ~25 % weight so we don't lose long-tail signal.
+2. **Per-channel specialists + blend** (`scripts/train_v71_channels.py`). Four channel-specific V7 boosters (ИМ, НКП, РС, СК) trained on per-channel slices, blended with the global model via `p = w · specialist + (1 − w) · global`. Sweep on `w ∈ [0, 1]` with the official scorecard picked **w=0.6** (additional −40 K UAH).
+
+Six other upgrades were tested and rejected with documented evidence (ADR-006): per-SKU newsvendor α (margin table too uniform), full and stockout-only monotone constraints (custom-pinball hessian incompatibility), iterative EM imputation (mixed — helps WAPE, hurts cost), per-row business-cost LightGBM objective (deferred), 5-quantile bundle (over-forecast disaster).
+
+Artefacts: `output/model_v7_{rec95,ch_im,ch_nkp,ch_rs,ch_sk}.joblib`, `output/preds_v71_{val,test}.csv`, `output/cost_scorecard_v71_channels.{md,json}`, `output/plot_v71_{dashboard,recency_sweep,channel_blend,stability}.png`. Full ADR: `docs/adr-006-v71.md`. Executive report: `docs/v71_final_report.md`.
 
 ### V4 creative approaches explored
 

@@ -47,6 +47,10 @@ from src.v7_components import (  # noqa: E402
     IsotonicCalibrator, PerSegmentConformal, RidgeStacker,
     SegmentResidualCorrector,
 )
+from src.v71_components import (  # noqa: E402
+    build_monotone_constraints, build_recency_weights,
+    iterative_impute_stockouts,
+)
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger("train_v7")
@@ -125,7 +129,24 @@ def main() -> int:
                          "(it overfits on short val histories).")
     ap.add_argument("--stacker-alpha", type=float, default=10.0,
                     help="Ridge regularisation strength for the stacker meta-learner.")
+    ap.add_argument("--recency-gamma", type=float, default=None,
+                    help="V7.1: per-row recency weight γ^(months_ago). "
+                         "e.g. 0.97 ≈ 50%% weight at 24 months old.  None = uniform.")
+    ap.add_argument("--monotone", action="store_true",
+                    help="V7.1: apply LightGBM monotone constraints on "
+                         "lag/rolling (positive) and stockout (negative) features.")
+    ap.add_argument("--monotone-mode", default="full",
+                    choices=("full", "stockout_only", "lags_only"),
+                    help="Which monotone pattern to apply (ignored if --monotone is off).")
+    ap.add_argument("--em-rounds", type=int, default=0,
+                    help="V7.1: re-impute censored demand using the model's own "
+                         "predictions and retrain (0 = disabled, 1 = one EM round).")
+    ap.add_argument("--save-tag", default="",
+                    help="Suffix for saved artefacts (model_v7{_tag}.joblib, "
+                         "preds_v7{_tag}_*.csv).  Empty keeps the default V7 paths.")
     args = ap.parse_args()
+
+    tag = f"_{args.save_tag}" if args.save_tag else ""
 
     t_all = time.time()
     abt = _load_v7()
@@ -141,6 +162,22 @@ def main() -> int:
     df_test = df_test.merge(keys, on=["Партнер", "Артикул"], how="inner")
     log.info("Split: train=%d val=%d test=%d", len(active), len(df_val), len(df_test))
 
+    sw_train = (build_recency_weights(active, gamma=args.recency_gamma)
+                if args.recency_gamma is not None else None)
+    sw_val = (build_recency_weights(df_val, gamma=args.recency_gamma)
+              if args.recency_gamma is not None else None)
+    if sw_train is not None:
+        log.info("V7.1 recency weights: γ=%.3f, train mean=%.3f (min=%.3f, max=%.3f)",
+                 args.recency_gamma, float(sw_train.mean()),
+                 float(sw_train.min()), float(sw_train.max()))
+    monotone = (build_monotone_constraints(feats, mode=args.monotone_mode)
+                if args.monotone else None)
+    if monotone is not None:
+        n_pos = sum(1 for x in monotone if x == 1)
+        n_neg = sum(1 for x in monotone if x == -1)
+        log.info("V7.1 monotone constraints: +%d, -%d, free=%d",
+                 n_pos, n_neg, len(monotone) - n_pos - n_neg)
+
     reg_params = {
         "num_leaves": 255,
         "learning_rate": 0.05,
@@ -152,16 +189,44 @@ def main() -> int:
         reg_params.update(best)
         log.info("Optuna tuned params merged: %s", best)
 
-    base = TwoStageForecaster(
-        clf_params={"num_leaves": 127, "learning_rate": 0.05, "min_child_samples": 30},
-        reg_params=reg_params,
-        reg_objective="pinball",
-        reg_objective_kwargs={"alpha": args.alpha},
-        target_col=args.target,
-    )
-    t0 = time.time()
-    base.fit(active, df_val, feats, num_boost_round=args.num_boost_round, early_stopping=60)
-    log.info("V7 base fitted in %.1fs", time.time() - t0)
+    # LightGBM's built-in `quantile` objective is incompatible with monotone
+    # constraints — fall back to the custom pinball objective (objective=none)
+    # which supports them.
+    reg_objective_name = "pinball_custom" if args.monotone else "pinball"
+
+    def _fit_base(train_df: pd.DataFrame, val_df: pd.DataFrame,
+                  sw_t: np.ndarray | None, sw_v: np.ndarray | None) -> TwoStageForecaster:
+        b = TwoStageForecaster(
+            clf_params={"num_leaves": 127, "learning_rate": 0.05, "min_child_samples": 30},
+            reg_params=reg_params,
+            reg_objective=reg_objective_name,
+            reg_objective_kwargs={"alpha": args.alpha},
+            target_col=args.target,
+        )
+        t0 = time.time()
+        b.fit(train_df, val_df, feats,
+              num_boost_round=args.num_boost_round, early_stopping=60,
+              sample_weight_train=sw_t, sample_weight_val=sw_v,
+              monotone_constraints=monotone)
+        log.info("V7 base fitted in %.1fs", time.time() - t0)
+        return b
+
+    base = _fit_base(active, df_val, sw_train, sw_val)
+
+    if args.em_rounds > 0:
+        log.info("V7.1 EM round: re-imputing censored demand using model predictions")
+        pred_full = base.predict(abt)
+        abt = iterative_impute_stockouts(abt, pred_full)
+        df_train, df_val, df_test = split_train_val_test(abt)
+        active = filter_active_pairs(df_train)
+        keys = active[["Партнер", "Артикул"]].drop_duplicates()
+        df_val = df_val.merge(keys, on=["Партнер", "Артикул"], how="inner")
+        df_test = df_test.merge(keys, on=["Партнер", "Артикул"], how="inner")
+        sw_train = (build_recency_weights(active, gamma=args.recency_gamma)
+                    if args.recency_gamma is not None else None)
+        sw_val = (build_recency_weights(df_val, gamma=args.recency_gamma)
+                  if args.recency_gamma is not None else None)
+        base = _fit_base(active, df_val, sw_train, sw_val)
 
     val_periods = sorted(df_val["Период"].unique())
     split_idx = max(1, int(round(len(val_periods) * 0.6)))
@@ -261,15 +326,15 @@ def main() -> int:
         log.info("  %-12s %-4s WAPE=%.4f MAPE_nz=%.4f RMSE=%.3f Bias=%+.3f",
                  m["model"], m["split"], m["WAPE"], m["MAPE_nz"], m["RMSE"], m["Bias"])
 
-    pd.DataFrame(metrics).to_csv(OUT / "v7_metrics.csv", index=False)
-    _save_preds(df_val, p_v7_val, OUT / "preds_v7_val.csv")
-    _save_preds(df_test, p_v7_test, OUT / "preds_v7_test.csv")
-    _save_preds(df_val, p_stack_val, OUT / "preds_v7_stacked_val.csv")
-    _save_preds(df_test, p_stack_test, OUT / "preds_v7_stacked_test.csv")
-    _save_preds(df_val, lo_val, OUT / "preds_v7_lower_val.csv")
-    _save_preds(df_val, hi_val, OUT / "preds_v7_upper_val.csv")
-    _save_preds(df_test, lo_test, OUT / "preds_v7_lower_test.csv")
-    _save_preds(df_test, hi_test, OUT / "preds_v7_upper_test.csv")
+    pd.DataFrame(metrics).to_csv(OUT / f"v7{tag}_metrics.csv", index=False)
+    _save_preds(df_val, p_v7_val, OUT / f"preds_v7{tag}_val.csv")
+    _save_preds(df_test, p_v7_test, OUT / f"preds_v7{tag}_test.csv")
+    _save_preds(df_val, p_stack_val, OUT / f"preds_v7{tag}_stacked_val.csv")
+    _save_preds(df_test, p_stack_test, OUT / f"preds_v7{tag}_stacked_test.csv")
+    _save_preds(df_val, lo_val, OUT / f"preds_v7{tag}_lower_val.csv")
+    _save_preds(df_val, hi_val, OUT / f"preds_v7{tag}_upper_val.csv")
+    _save_preds(df_test, lo_test, OUT / f"preds_v7{tag}_lower_test.csv")
+    _save_preds(df_test, hi_test, OUT / f"preds_v7{tag}_upper_test.csv")
 
     bundle = {
         "base": base,
@@ -281,10 +346,10 @@ def main() -> int:
         "alpha": args.alpha,
         "reg_params": reg_params,
     }
-    joblib.dump(bundle, OUT / "model_v7.joblib")
+    joblib.dump(bundle, OUT / f"model_v7{tag}.joblib")
 
     fi = base.feature_importance()
-    fi.to_csv(OUT / "feature_importance_v7.csv", index=False)
+    fi.to_csv(OUT / f"feature_importance_v7{tag}.csv", index=False)
 
     v6m = pd.read_csv(OUT / "v6_metrics.csv") if (OUT / "v6_metrics.csv").exists() else None
     if v6m is not None:
@@ -318,7 +383,7 @@ def main() -> int:
             f"- MAPE_nz Δ = **{metrics[-1]['MAPE_nz'] - float(v6_test['MAPE_nz']):+.4f}**",
             f"- Bias   V7_stacked {metrics[-1]['Bias']:+.3f} / V6 {float(v6_test['Bias']):+.3f}",
         ]
-    (OUT / "v7_vs_v6.md").write_text("\n".join(lines))
+    (OUT / f"v7{tag}_vs_v6.md").write_text("\n".join(lines))
 
     log.info("Total time: %.1fs", time.time() - t_all)
     return 0

@@ -168,43 +168,71 @@ class TwoStageForecaster:
         feature_cols: list[str],
         num_boost_round: int = 1000,
         early_stopping: int = 50,
+        sample_weight_train: np.ndarray | None = None,
+        sample_weight_val: np.ndarray | None = None,
+        monotone_constraints: list[int] | None = None,
     ) -> "TwoStageForecaster":
+        """Fit classifier + regressor.
+
+        Optional (V7.1):
+            sample_weight_{train,val} — per-row weight vectors aligned with
+                ``df_{train,val}``.  Typical use is recency weighting.
+            monotone_constraints — list of length ``len(feature_cols)``
+                with values in {-1, 0, +1}; forwarded to LightGBM as
+                ``monotone_constraints`` for BOTH stages.
+        """
         self.feature_cols = feature_cols
         t0 = time.time()
 
-        # Stage 1 always uses raw target_qty (censor-aware imputed targets can
-        # keep tiny positive values which we still want classified as "has demand").
         clf_target = "target_qty"
         reg_target = self.target_col
 
-        # Stage 1: binary classifier
         y_clf_train = (df_train[clf_target] > 0).astype(int)
         y_clf_val = (df_val[clf_target] > 0).astype(int)
 
-        ts1 = lgb.Dataset(df_train[feature_cols], label=y_clf_train, categorical_feature="auto")
-        vs1 = lgb.Dataset(df_val[feature_cols], label=y_clf_val, categorical_feature="auto")
+        ts1 = lgb.Dataset(
+            df_train[feature_cols], label=y_clf_train,
+            weight=sample_weight_train,
+            categorical_feature="auto",
+        )
+        vs1 = lgb.Dataset(
+            df_val[feature_cols], label=y_clf_val,
+            weight=sample_weight_val,
+            categorical_feature="auto",
+        )
+
+        clf_params = dict(self.clf_params)
+        if monotone_constraints is not None:
+            clf_params["monotone_constraints"] = list(monotone_constraints)
+            clf_params.setdefault("monotone_constraints_method", "advanced")
 
         self.clf = lgb.train(
-            self.clf_params, ts1, num_boost_round,
+            clf_params, ts1, num_boost_round,
             valid_sets=[vs1],
             callbacks=[lgb.early_stopping(early_stopping), lgb.log_evaluation(200)],
         )
         log.info("Stage 1 (classifier): %d rounds in %.1fs",
                  self.clf.current_iteration(), time.time() - t0)
 
-        # Stage 2: regressor on positive-demand rows only
         t1 = time.time()
-        mask_train = df_train[clf_target] > 0
-        mask_val = df_val[clf_target] > 0
+        mask_train = (df_train[clf_target] > 0).to_numpy()
+        mask_val = (df_val[clf_target] > 0).to_numpy()
+
+        sw_train_reg = (sample_weight_train[mask_train]
+                        if sample_weight_train is not None else None)
+        sw_val_reg = (sample_weight_val[mask_val]
+                      if sample_weight_val is not None else None)
 
         ts2 = lgb.Dataset(
             df_train.loc[mask_train, feature_cols],
             label=df_train.loc[mask_train, reg_target],
+            weight=sw_train_reg,
             categorical_feature="auto",
         )
         vs2 = lgb.Dataset(
             df_val.loc[mask_val, feature_cols],
             label=df_val.loc[mask_val, reg_target],
+            weight=sw_val_reg,
             categorical_feature="auto",
         )
 
@@ -215,6 +243,9 @@ class TwoStageForecaster:
         reg_params.update(overrides)
         if fobj is not None:
             reg_params["objective"] = fobj
+        if monotone_constraints is not None:
+            reg_params["monotone_constraints"] = list(monotone_constraints)
+            reg_params.setdefault("monotone_constraints_method", "advanced")
 
         self.reg = lgb.train(
             reg_params, ts2, num_boost_round,

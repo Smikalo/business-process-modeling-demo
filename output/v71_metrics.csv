@@ -1,0 +1,3 @@
+model,split,WAPE,MAPE_nz,RMSE,Bias
+V7_1,val,0.5118,0.7052,3.7996,0.6072
+V7_1,test,0.5238,0.7397,5.1406,0.6023
