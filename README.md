@@ -98,6 +98,27 @@ data/                                   — raw client data (not committed)
 
 ## Quick Start
 
+### Cloning the repo (Git LFS required)
+
+Trained model artifacts and the cached ABT parquet are stored via Git LFS.
+Install `git-lfs` once before cloning:
+
+```bash
+# macOS
+brew install git-lfs
+# Debian/Ubuntu
+sudo apt-get install git-lfs
+
+git lfs install
+git clone https://github.com/Smikalo/business-process-modeling-demo.git
+```
+
+A plain `git clone` without LFS will fetch only text pointers for the `.joblib`
+and `.parquet` files and training artifacts will be unusable until you run
+`git lfs pull`.
+
+### Running the pipeline
+
 ```bash
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
