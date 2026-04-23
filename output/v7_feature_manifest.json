@@ -1,0 +1,19 @@
+{
+  "rows": 316498,
+  "cols": 128,
+  "price_features": [
+    "price_lag1",
+    "price_lag3",
+    "price_vs_brand_median",
+    "price_vs_channel_median",
+    "price_vs_rrc",
+    "price_change_3m_pct",
+    "sku_price_elasticity"
+  ],
+  "cohort_features": [
+    "cohort_demand_lag1",
+    "cohort_stockout_share_lag1",
+    "cohort_size",
+    "cannibalisation_pressure"
+  ]
+}

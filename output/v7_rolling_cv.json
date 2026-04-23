@@ -1,0 +1,127 @@
+{
+  "config": {
+    "abt": "/Users/m.kozyrev/Desktop/business-process-modeling-demo/output/abt_v7_cached.parquet",
+    "target": "target_qty_imputed",
+    "reg_objective": "pinball",
+    "reg_objective_kwargs": {
+      "alpha": 0.45
+    },
+    "n_origins": 8,
+    "num_boost_round": 400
+  },
+  "per_origin": [
+    {
+      "WAPE": 0.4717,
+      "MAPE_nz": 0.481,
+      "RMSE": 3.5787,
+      "Bias": -0.5781,
+      "origin": "2025-07",
+      "n_train": 198315,
+      "n_test": 3051,
+      "n_test_full": 4277,
+      "actual_sum": 11424.0,
+      "pred_sum": 9660.20874153633,
+      "fit_seconds": 8.5
+    },
+    {
+      "WAPE": 0.4516,
+      "MAPE_nz": 0.464,
+      "RMSE": 5.6452,
+      "Bias": -0.5496,
+      "origin": "2025-08",
+      "n_train": 208890,
+      "n_test": 3165,
+      "n_test_full": 4277,
+      "actual_sum": 12899.0,
+      "pred_sum": 11159.363589657778,
+      "fit_seconds": 11.6
+    },
+    {
+      "WAPE": 0.4587,
+      "MAPE_nz": 0.5238,
+      "RMSE": 3.0655,
+      "Bias": 0.0259,
+      "origin": "2025-09",
+      "n_train": 217817,
+      "n_test": 3251,
+      "n_test_full": 4277,
+      "actual_sum": 11430.0,
+      "pred_sum": 11514.244461293007,
+      "fit_seconds": 14.1
+    },
+    {
+      "WAPE": 0.4298,
+      "MAPE_nz": 0.4916,
+      "RMSE": 3.7459,
+      "Bias": -0.571,
+      "origin": "2025-10",
+      "n_train": 227528,
+      "n_test": 3346,
+      "n_test_full": 4277,
+      "actual_sum": 14238.0,
+      "pred_sum": 12327.521912318432,
+      "fit_seconds": 12.6
+    },
+    {
+      "WAPE": 0.4397,
+      "MAPE_nz": 0.4868,
+      "RMSE": 5.9041,
+      "Bias": -1.1336,
+      "origin": "2025-11",
+      "n_train": 241224,
+      "n_test": 3496,
+      "n_test_full": 4277,
+      "actual_sum": 18096.0,
+      "pred_sum": 14133.028671261556,
+      "fit_seconds": 17.6
+    },
+    {
+      "WAPE": 0.387,
+      "MAPE_nz": 0.6038,
+      "RMSE": 9.8825,
+      "Bias": -0.5669,
+      "origin": "2025-12",
+      "n_train": 252910,
+      "n_test": 3613,
+      "n_test_full": 4277,
+      "actual_sum": 33507.0,
+      "pred_sum": 31458.895308102306,
+      "fit_seconds": 22.1
+    },
+    {
+      "WAPE": 0.4128,
+      "MAPE_nz": 0.5259,
+      "RMSE": 3.992,
+      "Bias": -0.8483,
+      "origin": "2026-01",
+      "n_train": 268309,
+      "n_test": 3779,
+      "n_test_full": 4277,
+      "actual_sum": 15308.0,
+      "pred_sum": 12102.092880468852,
+      "fit_seconds": 23.9
+    },
+    {
+      "WAPE": 0.4888,
+      "MAPE_nz": 0.483,
+      "RMSE": 2.9624,
+      "Bias": -0.8297,
+      "origin": "2026-02",
+      "n_train": 288648,
+      "n_test": 4009,
+      "n_test_full": 4277,
+      "actual_sum": 10052.0,
+      "pred_sum": 6725.910241364716,
+      "fit_seconds": 15.5
+    }
+  ],
+  "aggregates": {
+    "WAPE_mean": 0.4425125,
+    "WAPE_std": 0.03056355826388675,
+    "WAPE_selection_score": 0.45779427913194337,
+    "MAPE_nz_mean": 0.5074875,
+    "RMSE_mean": 4.8470375,
+    "Bias_mean": -0.6314124999999999,
+    "Bias_std": 0.31383856693171097
+  }
+}

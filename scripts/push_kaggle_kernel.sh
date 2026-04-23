@@ -49,10 +49,11 @@ trap 'rm -rf "$STAGE_DIR"' EXIT
 
 cp "$REPO_ROOT/$NOTEBOOK" "$STAGE_DIR/kernel.ipynb"
 
+TITLE="$(basename "$SLUG")"
 cat > "$STAGE_DIR/kernel-metadata.json" <<EOF
 {
   "id": "$SLUG",
-  "title": "bpm-v6-train",
+  "title": "$TITLE",
   "code_file": "kernel.ipynb",
   "language": "python",
   "kernel_type": "notebook",

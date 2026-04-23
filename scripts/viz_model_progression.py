@@ -48,8 +48,9 @@ PREDS = {
     "V4": (OUT / "preds_v4_val.csv", OUT / "preds_v4_test.csv"),
     "V5": (OUT / "preds_v5_val.csv", OUT / "preds_v5_test.csv"),
     "V6": (OUT / "preds_v6_val.csv", OUT / "preds_v6_test.csv"),
+    "V7": (OUT / "preds_v7_val.csv", OUT / "preds_v7_test.csv"),
 }
-COLORS = {"V4": "#a6c8ec", "V5": "#1f77b4", "V6": "#2ca02c"}
+COLORS = {"V4": "#a6c8ec", "V5": "#1f77b4", "V6": "#2ca02c", "V7": "#d62728"}
 
 DASHBOARD = OUT / "plot_model_progression.png"
 
@@ -94,7 +95,7 @@ def _panel_wape_bars(ax, data: dict[str, pd.DataFrame]) -> None:
         ax.text(xi, v + 0.005, f"{v:.3f}", ha="center", fontsize=8)
     for xi, v in zip(x + w/2, pivot["MAPE_nz"]):
         ax.text(xi, v + 0.005, f"{v:.3f}", ha="center", fontsize=8)
-    ax.set_title("Fixed-split WAPE & MAPE_nz — V4 vs V5 vs V6")
+    ax.set_title("Fixed-split WAPE & MAPE_nz — V4 vs V5 vs V6 vs V7")
     ax.set_ylabel("error")
     ax.legend(loc="upper right")
 
@@ -115,22 +116,27 @@ def _panel_monthly_wape(ax, data: dict[str, pd.DataFrame]) -> None:
 
 
 def _panel_rolling_box(ax) -> None:
-    path_v5 = OUT / "v5_rolling_cv.json"
-    path_v6 = OUT / "v6_rolling_cv.json"
+    spec = (
+        ("V5", OUT / "v5_rolling_cv.json"),
+        ("V6", OUT / "v6_rolling_cv.json"),
+        ("V7", OUT / "v7_rolling_cv.json"),
+    )
     boxes = []
     labels = []
-    for name, p in (("V5", path_v5), ("V6", path_v6)):
+    colors_out = []
+    for name, p in spec:
         if not p.exists():
             continue
         dat = json.loads(p.read_text())
         wapes = [r["WAPE"] for r in dat["per_origin"]]
         boxes.append(wapes); labels.append(f"{name} (n={len(wapes)})")
+        colors_out.append(COLORS[name])
     if not boxes:
         ax.set_axis_off()
         ax.set_title("Rolling CV data missing (run scripts.rolling_origin_cv)")
         return
     bp = ax.boxplot(boxes, labels=labels, patch_artist=True, widths=0.5)
-    colors = [COLORS["V5"], COLORS["V6"]][: len(boxes)]
+    colors = colors_out
     for patch, c in zip(bp["boxes"], colors):
         patch.set_facecolor(c); patch.set_alpha(0.6)
     for i, w in enumerate(boxes):
@@ -140,7 +146,9 @@ def _panel_rolling_box(ax) -> None:
 
 
 def _panel_cost(ax) -> None:
-    cost_path = OUT / "cost_scorecard.json"
+    cost_path = OUT / "cost_scorecard_final.json"
+    if not cost_path.exists():
+        cost_path = OUT / "cost_scorecard.json"
     if not cost_path.exists():
         ax.set_axis_off()
         ax.set_title("cost_scorecard.json missing — run decision_cost_scorecard")
@@ -183,7 +191,8 @@ def _panel_segment_heatmap(ax, data: dict[str, pd.DataFrame]) -> None:
     if not rows:
         ax.set_axis_off(); ax.set_title("segment_heatmap: no data"); return
     heat = pd.DataFrame(rows).pivot(index="channel", columns="model", values="wape")
-    heat = heat.reindex(columns=["V4", "V5", "V6"])
+    cols_order = [c for c in ["V4", "V5", "V6", "V7"] if c in heat.columns]
+    heat = heat.reindex(columns=cols_order)
     im = ax.imshow(heat.values, aspect="auto", cmap="RdYlGn_r", vmin=0.3, vmax=0.9)
     ax.set_xticks(range(heat.shape[1])); ax.set_xticklabels(heat.columns)
     ax.set_yticks(range(heat.shape[0])); ax.set_yticklabels(heat.index)

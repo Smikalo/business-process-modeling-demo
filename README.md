@@ -13,12 +13,14 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | V3 (V2 + 14 new features) | 0.509 | 0.537 | 5.19 | -0.34 |
 | V4 Creative Ensemble | 0.490 | 0.509 | 5.13 | -0.51 |
 | V5 (V4 + 6 external signal loaders) | 0.472 val / 0.510 test | 0.543 val / 0.573 test | 3.62 val / 5.13 test | — |
-| **V6 (imputation + promo-lifecycle + pinball-q60)** | **0.440 val / 0.449 test** | 0.600 val / 0.648 test | 4.20 val / 4.76 test | +0.34 val / +0.41 test |
+| V6 (imputation + promo-lifecycle + pinball-q60) | 0.440 val / 0.449 test | 0.600 val / 0.648 test | 4.20 val / 4.76 test | +0.34 val / +0.41 test |
+| **V7 (price + cohort + cost-calibrated α + stacking + conformal)** | **0.420 val / 0.421 test** | 0.531 val / 0.551 test | 4.32 val / 5.03 test | −0.37 val / −0.46 test |
 
 **V1 → V4:** WAPE −45 %, MAPE −25 %, RMSE −59 %
 **V4 → V5 (validation):** WAPE −1.5 pp, RMSE −2.9 % relative
 **V4 → V5 (test):** WAPE +0.9 pp regression — see ADR-003 for distribution-shift analysis.
 **V5 → V6 (fixed test):** WAPE **−2.8 pp** (0.478 → 0.449) and rolling-origin WAPE std **−42 %** — see ADR-004.
+**V6 → V7 (fixed test):** WAPE **−2.9 pp** (0.449 → 0.421, **−6.4 % relative**) and annualised UAH cost **−32 %** (2.07 M → 1.40 M) with the cost scorecard rewritten to use per-SKU *realised* margins — see ADR-005.
 
 ### V5 — external signal enrichment
 
@@ -54,6 +56,18 @@ A dedicated **UAH cost scorecard** (`scripts/decision_cost_scorecard.py`) evalua
 Free-GPU workflow (`docs/gpu-workflow.md`) is wired to Kaggle's free T4×2 kernels and is driven entirely by the Kaggle API token in repo-root `.env` (new `KGAT_…` bearer form or legacy `KAGGLE_USERNAME`/`KAGGLE_KEY`). Three scripts — `scripts/push_to_kaggle.sh`, `scripts/push_kaggle_kernel.sh`, `scripts/pull_kaggle_kernel_output.sh` — push the ABT as a private dataset, queue the training notebook as a GPU kernel, and pull artefacts back into `output/gpu/`. No browser clicks, no billing: Kaggle kernels have no paid tier, and the 30 GPU-hours/week quota resets automatically.
 
 Full ADR: `docs/adr-004-v6.md`. Executive report: `docs/v6_final_report.md`. Visuals: `output/plot_v6_dashboard.png` and `output/plot_model_progression.png`.
+
+### V7 — per-SKU realised margins + price & cohort features + stacked ensemble + conformal intervals
+
+V7 stacks five orthogonal upgrades on V6:
+
+1. **Per-SKU realised margin table** (`src/margin_table.py`, output `output/sku_margin.parquet`). Derives per-SKU unit-price and margin rate from the ABT itself via empirical-Bayes shrinkage toward brand × channel means, replacing the flat 28 % margin / 22 % holding assumption in the cost scorecard. Reveals the business actually runs at ~10 % median margin (distributor economics), which means V6's α=0.6 over-forecast bias was mis-calibrated.
+2. **Cost-calibrated pinball α = 0.45** (default) based on an 8-point α-sweep (`scripts/sweep_alpha_v7.py`, `output/v7_alpha_sweep.csv`). α=0.35 is documented as the cost-optimal operating point (annual UAH −47 % vs V6, at a 1.6 pp WAPE trade-off).
+3. **7 relative-price features** (`src/features_price.py`): `price_lag1`, `price_lag3`, `price_vs_brand_median`, `price_vs_channel_median`, `price_vs_rrc`, `price_change_3m_pct`, and a shrunk per-SKU log-log price elasticity.
+4. **4 cohort / substitution features** (`src/features_cohort.py`): same brand × product-group × channel cohort demand/stockout share/size/cannibalisation-pressure, all lag-shifted to avoid leakage.
+5. **Isotonic classifier calibration + V4+V5+V6+V7 ridge stacker + per-(brand, channel) conformal intervals** (`src/v7_components.py`). The ridge meta-learner uses positive weights and is fit on the held-out last 40 % of the validation window. The conformal calibrator emits 10/90 interval files alongside the point forecast for every prediction.
+
+Artefacts: `output/model_v7.joblib`, `output/preds_v7_{val,test,lower,upper,stacked}_*.csv`, `output/v7_metrics.csv`, `output/v7_rolling_cv.{json,md}`, `output/cost_scorecard_final.{md,json}`. Full ADR: `docs/adr-005-v7.md`. Executive report: `docs/v7_final_report.md`.
 
 ### V4 creative approaches explored
 

@@ -75,14 +75,14 @@ def _compute_cost(
     actual: np.ndarray,
     pred: np.ndarray,
     price: np.ndarray,
-    holding_rate: float,
-    margin_rate: float,
+    holding_rate,
+    margin_rate,
     recovery: float,
 ) -> dict:
     over = np.clip(pred - actual, 0, None)
     under = np.clip(actual - pred, 0, None)
-    holding_cost = holding_rate * (over * price).sum()
-    lost_margin = margin_rate * (1 - recovery) * (under * price).sum()
+    holding_cost = (np.asarray(holding_rate) * over * price).sum()
+    lost_margin = (np.asarray(margin_rate) * (1 - recovery) * under * price).sum()
     total = holding_cost + lost_margin
     return {
         "holding_cost_UAH": float(holding_cost),
@@ -98,15 +98,27 @@ def main() -> int:
     ap.add_argument("--preds-v4", default="output/preds_v4_test.csv")
     ap.add_argument("--preds-v5", default="output/preds_v5_test.csv")
     ap.add_argument("--preds-v6", default="output/preds_v6_test.csv")
+    ap.add_argument("--preds-v7", default="output/preds_v7_test.csv")
     ap.add_argument("--abt", default="output/abt_v6_cached.parquet")
     ap.add_argument("--holding-rate", type=float, default=0.22)
     ap.add_argument("--margin-rate", type=float, default=0.28)
     ap.add_argument("--recovery", type=float, default=0.50)
+    ap.add_argument("--margin-table", default=None,
+                    help="Path to sku_margin.parquet (per-SKU unit_price + margin_rate). "
+                         "When set, the scorecard uses per-SKU rates and --margin-rate/--holding-rate are ignored.")
     ap.add_argument("--output", default="output/cost_scorecard.md")
     ap.add_argument("--output-json", default="output/cost_scorecard.json")
     args = ap.parse_args()
 
     abt = pd.read_parquet(_REPO_ROOT / args.abt)
+    margin_tbl = None
+    if args.margin_table:
+        mt_path = _REPO_ROOT / args.margin_table
+        if mt_path.exists():
+            margin_tbl = pd.read_parquet(mt_path).set_index("Артикул")
+            log.info("Using per-SKU margin table from %s (%d SKUs)", mt_path, len(margin_tbl))
+        else:
+            log.warning("margin table %s not found — falling back to flat rates", mt_path)
     price_by_sku = _price_lookup(abt)
     global_price = float(price_by_sku.median()) if len(price_by_sku) else 100.0
 
@@ -114,10 +126,10 @@ def main() -> int:
         "V4": _load_preds(_REPO_ROOT / args.preds_v4, "V4"),
         "V5": _load_preds(_REPO_ROOT / args.preds_v5, "V5"),
         "V6": _load_preds(_REPO_ROOT / args.preds_v6, "V6"),
+        "V7": _load_preds(_REPO_ROOT / args.preds_v7, "V7"),
     }
 
-    # Build the test base from V6 predictions if present, else V5, else V4.
-    base = next((m for m in (models["V6"], models["V5"], models["V4"]) if m is not None), None)
+    base = next((m for m in (models["V7"], models["V6"], models["V5"], models["V4"]) if m is not None), None)
     if base is None:
         log.error("No prediction files found — nothing to score.")
         return 1
@@ -126,19 +138,34 @@ def main() -> int:
         on=KEYCOLS, how="left",
     )
     test_base = test_base.dropna(subset=["target_qty"])
-    test_base["price"] = test_base["Артикул"].map(price_by_sku).fillna(global_price)
+    if margin_tbl is not None:
+        test_base["price"] = (
+            test_base["Артикул"].map(margin_tbl["unit_price_uah"]).fillna(global_price)
+        )
+        test_base["holding_rate"] = (
+            test_base["Артикул"].map(margin_tbl["holding_rate_annual"])
+                                  .fillna(args.holding_rate)
+        )
+        test_base["margin_rate"] = (
+            test_base["Артикул"].map(margin_tbl["margin_rate"]).fillna(args.margin_rate)
+        )
+    else:
+        test_base["price"] = test_base["Артикул"].map(price_by_sku).fillna(global_price)
+        test_base["holding_rate"] = args.holding_rate
+        test_base["margin_rate"] = args.margin_rate
     actual = test_base["target_qty"].to_numpy()
     price = test_base["price"].to_numpy()
+    holding_arr = test_base["holding_rate"].to_numpy()
+    margin_arr = test_base["margin_rate"].to_numpy()
 
     rows = []
     # Naive
     naive_pred = _naive_y1(test_base)
     rows.append(
         {"model": "naive (y_t = y_{t-1})", **_compute_cost(
-            actual, naive_pred, price, args.holding_rate, args.margin_rate, args.recovery
+            actual, naive_pred, price, holding_arr, margin_arr, args.recovery
         )}
     )
-    # Each model
     for name, df in models.items():
         if df is None:
             continue
@@ -146,7 +173,7 @@ def main() -> int:
         pred = merged["prediction"].fillna(0).to_numpy()
         rows.append(
             {"model": name, **_compute_cost(
-                actual, pred, price, args.holding_rate, args.margin_rate, args.recovery
+                actual, pred, price, holding_arr, margin_arr, args.recovery
             )}
         )
 
@@ -160,8 +187,8 @@ def main() -> int:
         merged["prediction"] = merged["prediction"].fillna(0)
         merged["over"] = (merged["prediction"] - merged["target_qty"]).clip(lower=0)
         merged["under"] = (merged["target_qty"] - merged["prediction"]).clip(lower=0)
-        merged["holding_UAH"] = args.holding_rate * merged["over"] * merged["price"]
-        merged["lost_UAH"] = args.margin_rate * (1 - args.recovery) * merged["under"] * merged["price"]
+        merged["holding_UAH"] = merged["holding_rate"] * merged["over"] * merged["price"]
+        merged["lost_UAH"] = merged["margin_rate"] * (1 - args.recovery) * merged["under"] * merged["price"]
         seg = (
             merged.groupby(["Бренд", "Канал"], observed=True)
             .agg(
