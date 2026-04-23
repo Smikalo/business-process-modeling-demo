@@ -1,0 +1,120 @@
+
+══════════════════════════════════════════════════════════════════════
+STEP 1: Load active-pair-filtered ABT
+══════════════════════════════════════════════════════════════════════
+INFO Loading cached ABT from output/abt_v4_cached.parquet
+  Rows: train=230,958  val=51,324  test=34,216
+  Features: 61
+  Test nonzero rate: 59.3%
+
+══════════════════════════════════════════════════════════════════════
+STEP 2: V3 reference model (TwoStage Tweedie)
+══════════════════════════════════════════════════════════════════════
+Training until validation scores don't improve for 80 rounds
+Early stopping, best iteration is:
+[94]	valid_0's binary_logloss: 0.433795
+INFO Stage 1 (classifier): 94 rounds in 13.6s
+Training until validation scores don't improve for 80 rounds
+[200]	valid_0's l1: 2.45033
+[400]	valid_0's l1: 2.43082
+Early stopping, best iteration is:
+[341]	valid_0's l1: 2.42926
+INFO Stage 2 (regressor): 341 rounds in 188.6s
+  V3 test: {'WAPE': np.float64(0.5089), 'MAPE_nz': np.float64(0.5373), 'RMSE': np.float64(5.1941), 'Bias': -0.342}    [205s]
+
+══════════════════════════════════════════════════════════════════════
+STEP 3: Per-channel specialized models
+══════════════════════════════════════════════════════════════════════
+INFO Training channel ИМ: train=27864, val=6192
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[105]	valid_0's binary_logloss: 0.529752
+INFO Stage 1 (classifier): 105 rounds in 8.4s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.21894
+Early stopping, best iteration is:
+[273]	valid_0's l1: 2.1974
+INFO Stage 2 (regressor): 273 rounds in 388.5s
+INFO Training channel НКП: train=38718, val=8604
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[83]	valid_0's binary_logloss: 0.322601
+INFO Stage 1 (classifier): 83 rounds in 5.3s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.51583
+Early stopping, best iteration is:
+[187]	valid_0's l1: 2.51064
+INFO Stage 2 (regressor): 187 rounds in 19.2s
+INFO Training channel РС: train=37908, val=8424
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[36]	valid_0's binary_logloss: 0.510554
+INFO Stage 1 (classifier): 36 rounds in 3.8s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 1.65089
+Early stopping, best iteration is:
+[241]	valid_0's l1: 1.64989
+INFO Stage 2 (regressor): 241 rounds in 65.3s
+INFO Training channel СК: train=126468, val=28104
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[81]	valid_0's binary_logloss: 0.414904
+INFO Stage 1 (classifier): 81 rounds in 8.9s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.77109
+Early stopping, best iteration is:
+[286]	valid_0's l1: 2.75991
+INFO Stage 2 (regressor): 286 rounds in 686.3s
+  PerChannel test: {'WAPE': np.float64(0.5009), 'MAPE_nz': np.float64(0.5297), 'RMSE': np.float64(5.3376), 'Bias': -0.5506}    [1187s]
+
+══════════════════════════════════════════════════════════════════════
+STEP 4: Log-target two-stage (tail stabilization)
+══════════════════════════════════════════════════════════════════════
+Training until validation scores don't improve for 80 rounds
+Early stopping, best iteration is:
+[91]	valid_0's binary_logloss: 0.434575
+Training until validation scores don't improve for 80 rounds
+[300]	valid_0's l1: 0.333478
+Early stopping, best iteration is:
+[378]	valid_0's l1: 0.332822
+  LogTarget test: {'WAPE': np.float64(0.5069), 'MAPE_nz': np.float64(0.5078), 'RMSE': np.float64(5.3438), 'Bias': -0.6259}    [628s]
+
+══════════════════════════════════════════════════════════════════════
+STEP 5: Hierarchical reconciliation (V3 ∘ partner-total anchor)
+══════════════════════════════════════════════════════════════════════
+Training until validation scores don't improve for 80 rounds
+[300]	valid_0's l1: 107.775
+Early stopping, best iteration is:
+[231]	valid_0's l1: 107.679
+INFO Partner-total model: 231 rounds
+  Reconciled test: {'WAPE': np.float64(0.6539), 'MAPE_nz': np.float64(0.6293), 'RMSE': np.float64(8.0268), 'Bias': -1.2901}    [3s]
+
+══════════════════════════════════════════════════════════════════════
+STEP 6: Cheap baselines for ensemble
+══════════════════════════════════════════════════════════════════════
+  MA-lag-avg test: {'WAPE': np.float64(0.6471), 'MAPE_nz': np.float64(0.7059), 'RMSE': np.float64(7.6117), 'Bias': -0.5209}
+  Seasonal-12 test: {'WAPE': np.float64(0.7589), 'MAPE_nz': np.float64(0.9852), 'RMSE': np.float64(8.2782), 'Bias': -0.526}
+
+══════════════════════════════════════════════════════════════════════
+STEP 7: Optimized stacking ensemble
+══════════════════════════════════════════════════════════════════════
+INFO Optimal ensemble weights: {'V3': 0.4, 'PerChannel': 0.1, 'LogTarget': 0.4, 'Reconciled': 0.0, 'MA_lag_avg': 0.1, 'Seasonal12': 0.0} (val WAPE=0.4743)
+  Ensemble weights: {'V3': 0.4, 'PerChannel': 0.1, 'LogTarget': 0.4, 'Reconciled': 0.0, 'MA_lag_avg': 0.1, 'Seasonal12': 0.0}
+  V4 Ensemble test: {'WAPE': np.float64(0.4898), 'MAPE_nz': np.float64(0.5103), 'RMSE': np.float64(5.1254), 'Bias': -0.4943}
+INFO Saved base predictions to output/v4_base_predictions.joblib
+
+══════════════════════════════════════════════════════════════════════
+SUMMARY — V4 Creative Approaches
+══════════════════════════════════════════════════════════════════════
+                       WAPE  MAPE_nz    RMSE    Bias
+V4_Ensemble          0.4898   0.5103  5.1254 -0.4943
+V4_PerChannel        0.5009   0.5297  5.3376 -0.5506
+V4_LogTarget         0.5069   0.5078  5.3438 -0.6259
+V3                   0.5089   0.5373  5.1941 -0.3420
+Baseline_MA          0.6471   0.7059  7.6117 -0.5209
+V4_Reconciled        0.6539   0.6293  8.0268 -1.2901
+Baseline_Seasonal12  0.7589   0.9852  8.2782 -0.5260
+
+  BEST MODEL: V4_Ensemble  WAPE=0.4898
+
+  Total runtime: 2027s (33.8m)

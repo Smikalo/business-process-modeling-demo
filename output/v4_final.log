@@ -1,0 +1,106 @@
+══════════════════════════════════════════════════════════════════════
+V4 FINAL — Creative Ensemble Production Pipeline
+══════════════════════════════════════════════════════════════════════
+
+  Train: 230,958  Val: 51,324  Test: 34,216
+  Features: 61
+
+── Training V3 (two-stage Tweedie) ────────────────
+Training until validation scores don't improve for 80 rounds
+Early stopping, best iteration is:
+[94]	valid_0's binary_logloss: 0.433795
+INFO Stage 1 (classifier): 94 rounds in 8.8s
+Training until validation scores don't improve for 80 rounds
+[200]	valid_0's l1: 2.45033
+[400]	valid_0's l1: 2.43082
+Early stopping, best iteration is:
+[341]	valid_0's l1: 2.42926
+INFO Stage 2 (regressor): 341 rounds in 20.2s
+
+── Training LogTarget (two-stage log1p) ───────────
+Training until validation scores don't improve for 80 rounds
+Early stopping, best iteration is:
+[91]	valid_0's binary_logloss: 0.434575
+Training until validation scores don't improve for 80 rounds
+[300]	valid_0's l1: 0.333478
+Early stopping, best iteration is:
+[378]	valid_0's l1: 0.332822
+
+── Training PerChannel specialists ────────────────
+INFO Training channel ИМ: train=27864, val=6192
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[105]	valid_0's binary_logloss: 0.529752
+INFO Stage 1 (classifier): 105 rounds in 3.4s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.21894
+Early stopping, best iteration is:
+[273]	valid_0's l1: 2.1974
+INFO Stage 2 (regressor): 273 rounds in 13.7s
+INFO Training channel НКП: train=38718, val=8604
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[83]	valid_0's binary_logloss: 0.322601
+INFO Stage 1 (classifier): 83 rounds in 2.9s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.51583
+Early stopping, best iteration is:
+[187]	valid_0's l1: 2.51064
+INFO Stage 2 (regressor): 187 rounds in 9.3s
+INFO Training channel РС: train=37908, val=8424
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[36]	valid_0's binary_logloss: 0.510554
+INFO Stage 1 (classifier): 36 rounds in 2.0s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 1.65089
+Early stopping, best iteration is:
+[241]	valid_0's l1: 1.64989
+INFO Stage 2 (regressor): 241 rounds in 11.1s
+INFO Training channel СК: train=126468, val=28104
+Training until validation scores don't improve for 50 rounds
+Early stopping, best iteration is:
+[81]	valid_0's binary_logloss: 0.414904
+INFO Stage 1 (classifier): 81 rounds in 3.6s
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 2.77109
+Early stopping, best iteration is:
+[286]	valid_0's l1: 2.75991
+INFO Stage 2 (regressor): 286 rounds in 16.3s
+
+── Individual base model performance (test) ───────
+  V3               WAPE=0.5089  MAPE_nz=0.5373  RMSE=5.1941
+  LogTarget        WAPE=0.5069  MAPE_nz=0.5078  RMSE=5.3438
+  PerChannel       WAPE=0.5009  MAPE_nz=0.5297  RMSE=5.3376
+  MA_lag_avg       WAPE=0.6471  MAPE_nz=0.7059  RMSE=7.6117
+
+── Ensemble weight optimization (SLSQP on val WAPE) ──
+INFO Optimal ensemble weights: {'V3': 0.338, 'LogTarget': 0.431, 'PerChannel': 0.14, 'MA_lag_avg': 0.091} (val WAPE=0.4742)
+
+══════════════════════════════════════════════════════════════════════
+FINAL V4 ENSEMBLE RESULTS
+══════════════════════════════════════════════════════════════════════
+  Weights: {'V3': 0.338, 'LogTarget': 0.431, 'PerChannel': 0.14, 'MA_lag_avg': 0.091}
+  WAPE:     0.4898
+  MAPE_nz:  0.5087
+  RMSE:     5.1312
+  Bias:     -0.5098
+
+  vs V3:  WAPE  0.5089 → 0.4898   (+3.8%)
+          MAPE  0.5373 → 0.5087   (+5.3%)
+          RMSE  5.1941 → 5.1312   (+1.2%)
+
+  Top 10 features (V3 backbone):
+              feature     gain_clf     gain_reg   gain_total
+              rmean_6 2.174968e+06 3.044232e+04 2.205410e+06
+                lag_1 7.628238e+04 1.643485e+06 1.719768e+06
+             rmean_12 7.093716e+05 2.655613e+05 9.749328e+05
+              rmean_3 2.249921e+05 3.136132e+05 5.386053e+05
+                month 2.877411e+04 2.561348e+05 2.849090e+05
+          stockout_tt 2.705400e+05 2.018319e+03 2.725583e+05
+      inv_to_sales_tt 1.272454e+05 4.459913e+04 1.718445e+05
+lag_1_Количество_ship 4.059527e+04 1.279316e+05 1.685268e+05
+        Группа_товара 5.670690e+04 1.018336e+05 1.585405e+05
+        partner_total 4.887234e+04 8.085659e+04 1.297289e+05
+
+  Runtime: 125s

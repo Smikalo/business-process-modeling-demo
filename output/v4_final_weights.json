@@ -1,0 +1,20 @@
+{
+  "ensemble_weights": {
+    "V3": 0.0,
+    "PerChannel": 0.0,
+    "LogTarget": 0.0,
+    "Reconciled": 0.0,
+    "MA_lag_avg": 0.0,
+    "Seasonal12": 0.0,
+    "MetaGBDT": 0.783,
+    "V3_Iso": 0.142,
+    "Meta_Iso": 0.074
+  },
+  "best_model": "V4_MetaGBDT",
+  "test_metrics": {
+    "WAPE": 0.4817,
+    "MAPE_nz": 0.6166,
+    "RMSE": 5.7127,
+    "Bias": -0.8807
+  }
+}

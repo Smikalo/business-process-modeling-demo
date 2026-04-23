@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "V3": 0.338,
+    "LogTarget": 0.431,
+    "PerChannel": 0.14,
+    "MA_lag_avg": 0.091
+  },
+  "metrics": {
+    "WAPE": 0.4898,
+    "MAPE_nz": 0.5087,
+    "RMSE": 5.1312,
+    "Bias": -0.5098
+  },
+  "improvements_vs_v3_pct": {
+    "WAPE": 3.753193161721361,
+    "MAPE_nz": 5.322910850549034,
+    "RMSE": 1.2109893918099375
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "best_wape": 0.782194761622725,
+  "num_leaves": 227,
+  "learning_rate": 0.08646575877641546,
+  "feature_fraction": 0.9540358090281733,
+  "bagging_fraction": 0.5358441999911044,
+  "bagging_freq": 3,
+  "min_child_samples": 5,
+  "lambda_l1": 1.679751021939743e-07,
+  "lambda_l2": 6.071778869161978e-08
+}

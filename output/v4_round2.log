@@ -1,0 +1,67 @@
+══════════════════════════════════════════════════════════════════════
+V4 ROUND 2 — Calibration + Meta-Learner
+══════════════════════════════════════════════════════════════════════
+
+Base models available: ['V3', 'PerChannel', 'LogTarget', 'Reconciled', 'MA_lag_avg', 'Seasonal12']
+Val rows: 51,324   Test rows: 34,216
+
+V3 (reference): {'WAPE': np.float64(0.5089), 'MAPE_nz': np.float64(0.5373), 'RMSE': np.float64(5.1941), 'Bias': -0.342}
+
+──────────────────────────────────────────────────────────────────────
+1. Isotonic calibration on V3 predictions (per channel × volume_tier)
+──────────────────────────────────────────────────────────────────────
+INFO Isotonic calibration: 16 segments fit (+ global fallback)
+  Val WAPE: {'WAPE': np.float64(0.4512), 'MAPE_nz': np.float64(0.5433), 'RMSE': np.float64(3.3714), 'Bias': -0.0011}
+  Test:     {'WAPE': np.float64(0.5076), 'MAPE_nz': np.float64(0.5837), 'RMSE': np.float64(5.2684), 'Bias': -0.2247}
+
+──────────────────────────────────────────────────────────────────────
+2. Linear bias correction on V3 (shrunk per segment)
+──────────────────────────────────────────────────────────────────────
+INFO Bias corrector: fit 17 segments
+  Test: {'WAPE': np.float64(0.4985), 'MAPE_nz': np.float64(0.5783), 'RMSE': np.float64(5.0647), 'Bias': -0.2558}
+
+──────────────────────────────────────────────────────────────────────
+3. GBDT meta-learner (nonlinear blend of base models)
+──────────────────────────────────────────────────────────────────────
+Training until validation scores don't improve for 50 rounds
+[200]	valid_0's l1: 1.0775
+Early stopping, best iteration is:
+[170]	valid_0's l1: 1.07587
+INFO GBDT meta-learner: 170 rounds
+  Val metrics: {'WAPE': np.float64(0.435), 'MAPE_nz': np.float64(0.5599), 'RMSE': np.float64(3.93), 'Bias': -0.5079}
+  Test:        {'WAPE': np.float64(0.4817), 'MAPE_nz': np.float64(0.6166), 'RMSE': np.float64(5.7127), 'Bias': -0.8807}
+
+──────────────────────────────────────────────────────────────────────
+4. MetaGBDT + Isotonic calibration (compound)
+──────────────────────────────────────────────────────────────────────
+INFO Isotonic calibration: 16 segments fit (+ global fallback)
+  Test: {'WAPE': np.float64(0.4988), 'MAPE_nz': np.float64(0.583), 'RMSE': np.float64(5.3347), 'Bias': -0.2769}
+
+──────────────────────────────────────────────────────────────────────
+5. Extended linear blend (base preds + meta + isotonic-V3)
+──────────────────────────────────────────────────────────────────────
+INFO Optimal ensemble weights: {'V3': 0.0, 'PerChannel': 0.0, 'LogTarget': 0.0, 'Reconciled': 0.0, 'MA_lag_avg': 0.0, 'Seasonal12': 0.0, 'MetaGBDT': 0.783, 'V3_Iso': 0.142, 'Meta_Iso': 0.074} (val WAPE=0.4341)
+  Weights: {'V3': 0.0, 'PerChannel': 0.0, 'LogTarget': 0.0, 'Reconciled': 0.0, 'MA_lag_avg': 0.0, 'Seasonal12': 0.0, 'MetaGBDT': 0.783, 'V3_Iso': 0.142, 'Meta_Iso': 0.074}
+  Test:    {'WAPE': np.float64(0.4822), 'MAPE_nz': np.float64(0.6042), 'RMSE': np.float64(5.5355), 'Bias': -0.7428}
+
+──────────────────────────────────────────────────────────────────────
+6. SuperBlend + Isotonic (final calibration)
+──────────────────────────────────────────────────────────────────────
+INFO Isotonic calibration: 16 segments fit (+ global fallback)
+  Test: {'WAPE': np.float64(0.4974), 'MAPE_nz': np.float64(0.5812), 'RMSE': np.float64(5.2452), 'Bias': -0.2666}
+
+══════════════════════════════════════════════════════════════════════
+ROUND 2 SUMMARY
+══════════════════════════════════════════════════════════════════════
+                 WAPE  MAPE_nz    RMSE    Bias
+V4_MetaGBDT    0.4817   0.6166  5.7127 -0.8807
+V4_SuperBlend  0.4822   0.6042  5.5355 -0.7428
+V4_Final       0.4974   0.5812  5.2452 -0.2666
+V3+BiasCorr    0.4985   0.5783  5.0647 -0.2558
+V4_Meta+Iso    0.4988   0.5830  5.3347 -0.2769
+V3+Isotonic    0.5076   0.5837  5.2684 -0.2247
+V3             0.5089   0.5373  5.1941 -0.3420
+
+  BEST: V4_MetaGBDT  WAPE=0.4817  MAPE_nz=0.6166  RMSE=5.7127
+
+  Runtime: 4s
