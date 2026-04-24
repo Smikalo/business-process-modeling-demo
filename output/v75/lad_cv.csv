@@ -1,0 +1,7 @@
+name,OOF_mean,OOF_folds,in_sample,gap
+v75_lad_compact_reconcile_0.8,0.4589,"[0.4165, 0.4637, 0.4965]",0.445,0.0139
+v75_lad_compact_reconcile_0.5,0.4596,"[0.4231, 0.4534, 0.5023]",0.4521,0.0075
+v75_lad_extended_reconcile_0.5,0.4613,"[0.4291, 0.4547, 0.5002]",0.4505,0.0108
+v75_lad_compact_reconcile_1.0,0.4652,"[0.4308, 0.4708, 0.494]",0.4405,0.0247
+v75_lad_compact_per_channel,0.4778,"[0.4621, 0.4555, 0.5157]",0.4658,0.012
+v75_lad_extended_per_channel,0.4788,"[0.4706, 0.4539, 0.5119]",0.4632,0.0156
