@@ -44,10 +44,16 @@ def score_frame(df: pd.DataFrame) -> dict:
         if nz.any() else 0.0
     )
 
-    df2 = df.copy()
-    df2["Период"] = pd.PeriodIndex(df2["Период"].astype(str), freq="M")
-    g = df2.groupby("Период").agg(a=("target_qty", "sum"), p=("prediction", "sum"))
-    monthly_wape = float((np.abs(g["p"] - g["a"]) / g["a"].replace(0, np.nan)).mean())
+    # Fast monthly aggregate: avoid PeriodIndex / groupby overhead by hashing
+    # the 'Период' column to integer codes via pandas factorize.
+    codes, _ = pd.factorize(df["Период"], sort=False)
+    y_by = np.bincount(codes, weights=y)
+    p_by = np.bincount(codes, weights=p)
+    valid = y_by > 0
+    monthly_wape = float(
+        (np.abs(p_by[valid] - y_by[valid]) / y_by[valid]).mean()
+    ) if valid.any() else 0.0
+    g = None  # unused; kept for backward compat
 
     sim = wape + SIMSCORE_LAMBDA * abs(agg_bias_pct) + SIMSCORE_MU * monthly_wape
 

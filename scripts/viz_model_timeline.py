@@ -23,7 +23,8 @@ MODELS = [
     ("V7", "v7", "#ff7f0e"),
     ("V7.1", "v71_channels", "#d62728"),
     ("V7.2", "v72_champion", "#9467bd"),
-    ("V7.3 (champion)", "v73", "#e377c2"),
+    ("V7.3", "v73", "#e377c2"),
+    ("V7.4 (champion)", "v74", "#17becf"),
 ]
 
 
