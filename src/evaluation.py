@@ -53,6 +53,41 @@ def split_train_val_test(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, 
     return df_train, df_val, df_test
 
 
+def rolling_cv_splits(
+    df: pd.DataFrame,
+    n_folds: int = 5,
+    horizon_months: int = 3,
+    final_train_end: str = "2024-12",
+) -> list[tuple[pd.DataFrame, pd.DataFrame]]:
+    """Walk-forward CV splits that never touch the held-out test window.
+
+    The last training month of fold i is ``final_train_end`` − (n_folds − i)·horizon.
+    Each fold validates on the next ``horizon_months`` months.
+
+    With defaults (n_folds=5, horizon=3, final_train_end=2024-12) the folds are:
+
+    - fold 1: train ≤ 2023-12, val 2024-01..2024-03
+    - fold 2: train ≤ 2024-03, val 2024-04..2024-06
+    - fold 3: train ≤ 2024-06, val 2024-07..2024-09
+    - fold 4: train ≤ 2024-09, val 2024-10..2024-12
+    - fold 5: train ≤ 2024-12, val 2025-01..2025-03
+
+    This leaves 2025-04..2025-06 as a silent inner buffer and 2025-07..2026-02
+    (the true test window) strictly untouched.
+    """
+    final_train = pd.Period(final_train_end, freq="M")
+    out: list[tuple[pd.DataFrame, pd.DataFrame]] = []
+    for i in range(n_folds):
+        shift = (n_folds - 1 - i) * horizon_months
+        train_end = final_train - shift
+        val_start = train_end + 1
+        val_end = train_end + horizon_months
+        df_train = df[df["Период"] <= train_end].copy()
+        df_val = df[(df["Период"] >= val_start) & (df["Период"] <= val_end)].copy()
+        out.append((df_train, df_val))
+    return out
+
+
 def get_feature_columns(df: pd.DataFrame) -> list[str]:
     """Return numeric feature columns (exclude IDs, target, and text columns)."""
     exclude = {

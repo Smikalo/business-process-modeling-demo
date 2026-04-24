@@ -1,0 +1,13 @@
+{
+  "n_rows": 20968,
+  "WAPE": 0.4362,
+  "MAE": 2.0287,
+  "RMSE": 4.5337,
+  "Bias_units": -0.1477,
+  "Agg_Bias_pct": -3.174,
+  "SMAPE_nz": 0.4987,
+  "Monthly_WAPE": 0.1185,
+  "SIMSCORE": 0.5113,
+  "tag": "v73_test",
+  "preds_path": "output/preds_v73_test.csv"
+}

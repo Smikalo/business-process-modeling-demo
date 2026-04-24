@@ -16,7 +16,8 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | V6 (imputation + promo-lifecycle + pinball-q60) | 0.440 val / 0.449 test | 0.600 val / 0.648 test | 4.20 val / 4.76 test | +0.34 val / +0.41 test |
 | V7 (price + cohort + cost-calibrated α + stacking + conformal) | 0.420 val / 0.421 test | 0.531 val / 0.551 test | 4.32 val / 5.03 test | −0.37 val / −0.46 test |
 | V7.1 (V7 + recency weights γ=0.95 + per-channel specialists w=0.6) | 0.412 val / 0.412 test | 0.484 val / 0.490 test | — | −0.54 val / −0.56 test |
-| **V7.2 (V7.1 + Optuna retuned on UAH cost, blend w=0.5)** | **0.421 val / 0.409 test** | — | 4.47 val / 5.06 test | −0.47 val / −0.51 test |
+| V7.2 (V7.1 + Optuna retuned on UAH cost, blend w=0.5) | 0.421 val / 0.409 test | — | 4.47 val / 5.06 test | −0.47 val / −0.51 test |
+| **V7.3 (NNLS stack of V4/V5/V6/V7.1 under pre-registered SIMSCORE)** | **0.424 val / 0.436 test** | SMAPE **0.499** test | **4.53 test** | **−0.15 test** |
 
 **V1 → V4:** WAPE −45 %, MAPE −25 %, RMSE −59 %
 **V4 → V5 (validation):** WAPE −1.5 pp, RMSE −2.9 % relative
@@ -25,6 +26,7 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 **V6 → V7 (fixed test):** WAPE **−2.9 pp** (0.449 → 0.421, **−6.4 % relative**) and annualised UAH cost **−32 %** (2.07 M → 1.40 M) with the cost scorecard rewritten to use per-SKU *realised* margins — see ADR-005.
 **V7 → V7.1 (fixed test):** WAPE **−0.9 pp** (0.421 → 0.412) and annualised UAH cost **−6.2 %** (1.40 M → 1.32 M, −87 K UAH) via recency sample weights (γ=0.95) and per-channel specialists blended at w=0.6 with the global model — see ADR-006.
 **V7.1 → V7.2 (fixed test):** WAPE **−0.3 pp** (0.412 → 0.409) and annualised UAH cost **−0.4 %** (1.316 M → 1.311 M, −5.6 K UAH) by re-running Optuna with the UAH scorecard as the *direct* objective (the previous Kaggle Optuna on pinball loss was +12.5 K UAH worse). Dec peak under-forecast improved from −12.7 % to −11.6 %. Seasonal Q4 features and a monthly-mean calibrator were tested and dropped (no signal / +293 K UAH) — see `docs/v72_final_report.md`.
+**V7.2 → V7.3 (similarity-first, fixed test):** the objective changes from "minimise UAH cost" to "predictions most similar to actuals". V7.3 is an NNLS stack of V4, V5, V6, and V7.1 (V7 and V7.2 receive zero weight) picked via 3-fold rolling-origin CV inside the validation window under a pre-registered SIMSCORE = WAPE + 0.005·|agg_bias_pct| + 0.5·Monthly-WAPE. Result: **SIMSCORE 0.5113 vs V7.2's 0.5272** (−0.016), aggregate bias collapses from **−11.5 % to −3.17 %**, SMAPE **0.527 → 0.499**, RMSE **5.10 → 4.53**, Monthly-WAPE **0.122 → 0.119**, and portfolio-level WAPE over the 20-month val+test window **0.113 → 0.073** (best of every model generation). Monthly-scalar calibrators scored better *in-sample* but were auto-rejected by the ≤ 0.05 overfit-gap rule — see `docs/v73_final_report.md`.
 
 ### V5 — external signal enrichment
 
