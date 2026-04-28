@@ -1,0 +1,52 @@
+{
+  "champion_a": 0.225,
+  "champion_b": 0.0,
+  "OOF_recency": 0.4119,
+  "OOF_bias_pct": -0.883,
+  "bias_ceiling_used": 1.0,
+  "blend_val": {
+    "n_rows": 31368,
+    "WAPE": 0.3311,
+    "MAE": 1.5664,
+    "RMSE": 3.6831,
+    "Bias_units": -0.0687,
+    "Agg_Bias_pct": -1.452,
+    "SMAPE_nz": 0.4163,
+    "Monthly_WAPE": 0.0384,
+    "SIMSCORE": 0.3575
+  },
+  "blend_test": {
+    "n_rows": 18298,
+    "WAPE": 0.395,
+    "MAE": 1.9458,
+    "RMSE": 4.8466,
+    "Bias_units": 0.1379,
+    "Agg_Bias_pct": 2.799,
+    "SMAPE_nz": 0.4926,
+    "Monthly_WAPE": 0.0799,
+    "SIMSCORE": 0.4489
+  },
+  "v11_final_val": {
+    "n_rows": 31368,
+    "WAPE": 0.3311,
+    "MAE": 1.5664,
+    "RMSE": 3.6831,
+    "Bias_units": -0.0687,
+    "Agg_Bias_pct": -1.452,
+    "SMAPE_nz": 0.4163,
+    "Monthly_WAPE": 0.0384,
+    "SIMSCORE": 0.3575
+  },
+  "v11_final_test": {
+    "n_rows": 18298,
+    "WAPE": 0.395,
+    "MAE": 1.9458,
+    "RMSE": 4.8466,
+    "Bias_units": 0.1379,
+    "Agg_Bias_pct": 2.799,
+    "SMAPE_nz": 0.4926,
+    "Monthly_WAPE": 0.0799,
+    "SIMSCORE": 0.4489
+  },
+  "improved_over_v11_final": false
+}

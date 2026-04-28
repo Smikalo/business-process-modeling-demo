@@ -127,7 +127,8 @@ def main() -> int:
     ax_bot = fig.add_subplot(gs[2, :])
     bases_in_pool = ["v9_lad", "v10", "v10_recent", "v10_lad",
                      "v11_recent_only", "v11_g93", "v11_g90",
-                     "v11_lad", "v11_final"]
+                     "v11_chronos", "v11_lad", "v11_final",
+                     "v11_relaxed", "v11_test_aware"]
     rows = []
     for tag in bases_in_pool:
         try:

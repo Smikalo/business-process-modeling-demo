@@ -1,0 +1,86 @@
+{
+  "V11_final": {
+    "a": 0.225,
+    "b": 0.0,
+    "val": {
+      "n_rows": 31368,
+      "WAPE": 0.3311,
+      "MAE": 1.5664,
+      "RMSE": 3.6831,
+      "Bias_units": -0.0687,
+      "Agg_Bias_pct": -1.452,
+      "SMAPE_nz": 0.4163,
+      "Monthly_WAPE": 0.0384,
+      "SIMSCORE": 0.3575
+    },
+    "test": {
+      "n_rows": 18298,
+      "WAPE": 0.395,
+      "MAE": 1.9458,
+      "RMSE": 4.8466,
+      "Bias_units": 0.1379,
+      "Agg_Bias_pct": 2.799,
+      "SMAPE_nz": 0.4926,
+      "Monthly_WAPE": 0.0799,
+      "SIMSCORE": 0.4489
+    },
+    "criterion": "OOF_recency under |bias%|<=1.0",
+    "production": true
+  },
+  "V11_relaxed": {
+    "a": 0.25,
+    "b": 0.025,
+    "val": {
+      "n_rows": 31368,
+      "WAPE": 0.3317,
+      "MAE": 1.5695,
+      "RMSE": 3.7066,
+      "Bias_units": -0.0958,
+      "Agg_Bias_pct": -2.025,
+      "SMAPE_nz": 0.4161,
+      "Monthly_WAPE": 0.0424,
+      "SIMSCORE": 0.3631
+    },
+    "test": {
+      "n_rows": 18298,
+      "WAPE": 0.3939,
+      "MAE": 1.9403,
+      "RMSE": 4.8704,
+      "Bias_units": 0.0955,
+      "Agg_Bias_pct": 1.938,
+      "SMAPE_nz": 0.4911,
+      "Monthly_WAPE": 0.0822,
+      "SIMSCORE": 0.4447
+    },
+    "criterion": "OOF_recency under |bias%|<=1.5 (Chronos enters at b=0.025)",
+    "production": false
+  },
+  "V11_test_aware": {
+    "a": 0.3,
+    "b": 0.075,
+    "val": {
+      "n_rows": 31368,
+      "WAPE": 0.3347,
+      "MAE": 1.5834,
+      "RMSE": 3.7733,
+      "Bias_units": -0.15,
+      "Agg_Bias_pct": -3.171,
+      "SMAPE_nz": 0.4175,
+      "Monthly_WAPE": 0.0503,
+      "SIMSCORE": 0.3757
+    },
+    "test": {
+      "n_rows": 18298,
+      "WAPE": 0.3926,
+      "MAE": 1.9341,
+      "RMSE": 4.9338,
+      "Bias_units": 0.0106,
+      "Agg_Bias_pct": 0.215,
+      "SMAPE_nz": 0.4892,
+      "Monthly_WAPE": 0.0869,
+      "SIMSCORE": 0.4371
+    },
+    "criterion": "TEST-aware (peeked at test for selection — NOT production-safe)",
+    "production": false
+  }
+}

@@ -29,6 +29,49 @@ test SIMSCORE by **4.3 %** at the cost of 1.3 % validation SIMSCORE.
 the war-economy regime change is now compensated *causally* — every
 component fitted before knowing what the test set looks like.
 
+## Three V11 variants compared
+
+After Chronos-T5-Small was integrated via the Colab notebook
+(see `docs/v11_chronos_colab_guide.md`), three blend variants were
+evaluated to expose the OOF-vs-test trade-off transparently.  All
+three blend the same three components — V11_LAD (base), V11_g93
+(steep-recency LightGBM), V11_chronos (zero-shot foundation model) —
+in the form `ŷ = (1-a-b)·V11_LAD + a·V11_g93 + b·V11_chronos`.
+
+| Variant | a | b | Selection criterion | Val SIMSCORE | Test SIMSCORE | Test bias | Production |
+|---|---:|---:|---|---:|---:|---:|:---:|
+| **V11_final** | **0.225** | **0.000** | OOF_recency under \|bias%\|≤1.0 | **0.3575** | **0.4489** | **+2.80 %** | **YES** |
+| V11_relaxed | 0.250 | 0.025 | OOF_recency under \|bias%\|≤1.5 (Chronos enters at b=0.025) | 0.3631 | 0.4447 | +1.94 % | benchmark |
+| V11_test_aware | 0.300 | 0.075 | tuned with a peek at test — NOT production-safe | 0.3757 | 0.4371 | +0.21 % | reference |
+
+Predictions are saved at `output/preds_v11_{final,relaxed,test_aware}_{val,test}.csv`.
+
+**Key finding: Chronos failed to earn weight under the strict
+selection criterion.** The CV-search across 153 (a, b) candidates
+picked exactly the same point as the V11 LAD without Chronos
+(a=0.225, b=0.000).  Reason: Chronos's standalone WAPE of 0.594
+on test (vs 0.401 for V10 LAD) means it produces noisy individual
+predictions; only the aggregate bias correction is useful, and
+that's smaller than the row-level noise it introduces.
+
+**The OOF-vs-test trade is real, not just CV pessimism.**  Going
+from V11_final to V11_test_aware:
+
+* **Test SIMSCORE drops from 0.4489 → 0.4371 (−2.6 %, big win)**
+* **Val SIMSCORE rises from 0.3575 → 0.3757 (+5.1 %, real loss)**
+
+The val-loss IS verifiable — it's not pessimism, it's the model
+fitting the test regime worse than the val regime.  But test
+benefits from the same bias-correction.  Without seeing the test
+labels, **OOF cannot tell us this is a good idea**.
+
+**Recommendation:** Ship V11_final as production. Keep V11_relaxed
+and V11_test_aware as benchmarks for monitoring — they reveal that
+the V11 pipeline is *bias-bound, not signal-bound* in the test
+regime, and the only way to close that gap further is more
+validation history (wait 6 more months) or an at-deployment
+test-time bias recalibrator.
+
 ---
 
 ## What changed vs V10 — at a glance
