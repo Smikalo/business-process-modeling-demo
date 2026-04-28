@@ -68,16 +68,30 @@ Done. Drive will sync it within seconds.
 
 Click each cell in order and press **Shift + Enter**.
 
-### Cell 1 — install Chronos (~ 30 s)
+### Cell 1 — install Chronos (~ 60 s, **may need a runtime restart**)
 
 You should see something like:
 ```
-torch 2.x.x cuda True
+torch 2.10.0+cu128 cuda True
+transformers 4.49.0   (must be 4.48 <= x < 5)
 GPU: Tesla T4
 CUDA cap.: (7, 5)
 ```
 
-If it says `cuda False`, go back to Step 2 — runtime is on CPU.
+**If `transformers` prints `5.x.x`** (Colab Free ships 5.x by default —
+incompatible with `chronos-forecasting==1.5.2`):
+
+1. **Runtime → Restart session** (top menu)
+2. Re-run **only Cell 1** once more
+3. Now `transformers` will load as 4.49.x and the rest of the
+   notebook works.
+
+If you see `cuda False`, go back to Step 2 — runtime is on CPU.
+
+If pip prints a `dependency resolver` warning about
+`transformers<5,>=4.48`, ignore it: it appears mid-install before pip
+finds a compatible version.  As long as the final `transformers x.y.z`
+print is in the 4.48–4.99 range, you are fine.
 
 ### Cell 2 — mount Drive (~ 5 s)
 
