@@ -1,0 +1,37 @@
+{
+  "rows": 316498,
+  "cols": 157,
+  "within_month_features": [
+    "wm_avg_qty_per_day_lag1",
+    "wm_avg_qty_per_day_lag1_3mavg",
+    "wm_bc_first_week_share_lag1",
+    "wm_bc_last_week_share_lag1",
+    "wm_bc_weekly_cv_lag1",
+    "wm_first_week_share_lag1",
+    "wm_first_week_share_lag1_3mavg",
+    "wm_last_week_share_lag1",
+    "wm_last_week_share_lag1_3mavg",
+    "wm_max_day_share_lag1",
+    "wm_max_day_share_lag1_3mavg",
+    "wm_mid_week_share_lag1",
+    "wm_mid_week_share_lag1_3mavg",
+    "wm_n_shipments_lag1",
+    "wm_n_shipments_lag1_3mavg",
+    "wm_n_shipping_days_lag1",
+    "wm_n_shipping_days_lag1_3mavg",
+    "wm_peak_week_lag1",
+    "wm_peak_week_lag1_3mavg",
+    "wm_weekend_share_lag1",
+    "wm_weekend_share_lag1_3mavg",
+    "wm_weekly_cv_lag1",
+    "wm_weekly_cv_lag1_3mavg"
+  ],
+  "school_features": [
+    "back_to_school_month",
+    "months_until_back_to_school",
+    "school_in_session",
+    "spring_school_break",
+    "summer_break",
+    "winter_school_break"
+  ]
+}

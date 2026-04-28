@@ -157,7 +157,8 @@ def main() -> int:
     t_all = time.time()
     abt = _load_v7(args.abt_path)
     feats = get_feature_columns_v2(abt)
-    feats = [c for c in feats if c != "target_qty_imputed"]
+    feats = [c for c in feats
+             if c != "target_qty_imputed" and not c.startswith("target_qty")]
 
     log.info("ABT: %d rows, %d features (source=%s)", len(abt), len(feats), args.abt_path)
 

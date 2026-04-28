@@ -1,0 +1,25 @@
+{
+  "rows": 316498,
+  "cols": 191,
+  "recv_stock_features": [
+    "days_of_supply_orc_lag1",
+    "recv_qty_growth_lag1",
+    "recv_qty_lag_1",
+    "recv_qty_lag_2",
+    "recv_qty_lag_3",
+    "recv_qty_lag_6",
+    "recv_qty_rmean_3_lag1",
+    "recv_qty_rmean_6_lag1",
+    "recv_to_ship_ratio_lag1",
+    "stock_orc_buildup_flag_lag1",
+    "stock_orc_depletion_lag1",
+    "stock_orc_lag_1",
+    "stock_orc_lag_2",
+    "stock_orc_lag_3",
+    "stock_tt_lag_1",
+    "stock_tt_lag_2",
+    "stock_tt_lag_3",
+    "stock_tt_velocity_lag1",
+    "tt_to_orc_ratio_lag1"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "auc_oof": 0.9999912847380003,
+  "auc_in_sample": 1.0,
+  "n_train_rows": 230958,
+  "n_recent_rows": 12831,
+  "weight_stats": {
+    "min": 0.10000000149011612,
+    "p25": 0.10000000149011612,
+    "median": 0.10000000149011612,
+    "p75": 0.10000000149011612,
+    "p99": 0.10000000149011612,
+    "max": 0.24147599935531616
+  },
+  "top_10_drift_features": [
+    {
+      "feature": "sku_age_months",
+      "gain_total_avg_per_fold": 94488.53411740065
+    },
+    {
+      "feature": "months_since_last_promo",
+      "gain_total_avg_per_fold": 51543.57333564758
+    },
+    {
+      "feature": "trends_toy_brands",
+      "gain_total_avg_per_fold": 29532.601466178894
+    },
+    {
+      "feature": "release_next_month",
+      "gain_total_avg_per_fold": 21800.775114536285
+    },
+    {
+      "feature": "months_since_demand",
+      "gain_total_avg_per_fold": 16621.843950986862
+    },
+    {
+      "feature": "months_until_next_promo",
+      "gain_total_avg_per_fold": 12018.783480897546
+    },
+    {
+      "feature": "brand_active",
+      "gain_total_avg_per_fold": 11698.50513458252
+    },
+    {
+      "feature": "brand_total",
+      "gain_total_avg_per_fold": 10110.259234666824
+    },
+    {
+      "feature": "month",
+      "gain_total_avg_per_fold": 9435.140808105469
+    },
+    {
+      "feature": "days_to_womens_day",
+      "gain_total_avg_per_fold": 9226.004910558462
+    }
+  ]
+}

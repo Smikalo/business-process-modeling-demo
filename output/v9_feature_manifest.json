@@ -1,0 +1,21 @@
+{
+  "rows": 316498,
+  "cols": 172,
+  "sales_leading_features": [
+    "sales_lead_signal_lag1",
+    "sales_qty_growth_lag1",
+    "sales_qty_lag_1",
+    "sales_qty_lag_12",
+    "sales_qty_lag_13",
+    "sales_qty_lag_2",
+    "sales_qty_lag_3",
+    "sales_qty_lag_6",
+    "sales_qty_rmean_12_lag1",
+    "sales_qty_rmean_3_lag1",
+    "sales_qty_rmean_6_lag1",
+    "sales_share_of_brand_lag1",
+    "sales_yoy_ratio_lag1",
+    "sell_through_ratio_lag1",
+    "sell_through_ratio_lag2"
+  ]
+}

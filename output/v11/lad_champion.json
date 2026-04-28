@@ -1,0 +1,183 @@
+{
+  "champion": "v10_baseline_tau0.52_ch08_chABC_brand",
+  "OOF_SIMSCORE": 0.3881,
+  "OOF_recency": 0.413,
+  "OOF_bias_recency_pct": -0.78,
+  "OOF_folds": [
+    0.3053,
+    0.3876,
+    0.4714
+  ],
+  "in_sample_SIMSCORE": 0.3525,
+  "overfit_gap": 0.0356,
+  "raw_val_score": {
+    "n_rows": 31368,
+    "WAPE": 0.3326,
+    "MAE": 1.5737,
+    "RMSE": 3.6687,
+    "Bias_units": -0.0271,
+    "Agg_Bias_pct": -0.573,
+    "SMAPE_nz": 0.4186,
+    "Monthly_WAPE": 0.0341,
+    "SIMSCORE": 0.3525
+  },
+  "raw_test_score": {
+    "n_rows": 18298,
+    "WAPE": 0.4011,
+    "MAE": 1.9759,
+    "RMSE": 4.8109,
+    "Bias_units": 0.2509,
+    "Agg_Bias_pct": 5.094,
+    "SMAPE_nz": 0.4966,
+    "Monthly_WAPE": 0.0845,
+    "SIMSCORE": 0.4688
+  },
+  "calibrated_val_score": {
+    "n_rows": 31368,
+    "WAPE": 0.334,
+    "MAE": 1.5804,
+    "RMSE": 3.6643,
+    "Bias_units": 0.0102,
+    "Agg_Bias_pct": 0.216,
+    "SMAPE_nz": 0.4188,
+    "Monthly_WAPE": 0.0359,
+    "SIMSCORE": 0.3531
+  },
+  "calibrated_test_score": {
+    "n_rows": 18298,
+    "WAPE": 0.4006,
+    "MAE": 1.9732,
+    "RMSE": 4.812,
+    "Bias_units": 0.2392,
+    "Agg_Bias_pct": 4.856,
+    "SMAPE_nz": 0.4964,
+    "Monthly_WAPE": 0.0827,
+    "SIMSCORE": 0.4662
+  },
+  "calibrator": {
+    "axes": null,
+    "beta": 0.5,
+    "fold_in_test": false,
+    "meta": {
+      "axes": null,
+      "beta": 0.5,
+      "alpha_clip": [
+        0.7,
+        1.5
+      ],
+      "fold_in_test": false,
+      "final_alpha_per_axis": {
+        "_GLOBAL": 0.9977324660155098
+      }
+    }
+  },
+  "lad_meta": {
+    "base": {
+      "_global": {
+        "v4": 0.0,
+        "v5": 0.0,
+        "v6": 0.0,
+        "v7": 0.0,
+        "v71": 0.0,
+        "v72_champion": 0.0,
+        "v77_recent": 0.0,
+        "v77_quantile60": 0.0,
+        "v8": 0.0,
+        "v8_recent": 0.0,
+        "v9": 0.08653378932051489,
+        "v9_recent": 0.0,
+        "v9_weekly": 0.0,
+        "v10": 0.5650310409103926,
+        "v10_recent": 0.3484351697690926
+      },
+      "tau": 0.52,
+      "ИМ": {
+        "v4": 0.0,
+        "v5": 0.0,
+        "v6": 0.0,
+        "v7": 0.0,
+        "v71": 0.0,
+        "v72_champion": 0.0,
+        "v77_recent": 0.0,
+        "v77_quantile60": 0.0,
+        "v8": 0.0,
+        "v8_recent": 0.0,
+        "v9": 0.0,
+        "v9_recent": 0.0,
+        "v9_weekly": 0.02841827594993328,
+        "v10": 0.26632916917456456,
+        "v10_recent": 0.7052525548755022
+      },
+      "СК": {
+        "v4": 0.0,
+        "v5": 0.0,
+        "v6": 0.0,
+        "v7": 0.0,
+        "v71": 0.0,
+        "v72_champion": 0.0,
+        "v77_recent": 0.0,
+        "v77_quantile60": 0.0,
+        "v8": 0.0,
+        "v8_recent": 0.0,
+        "v9": 0.13498264923498998,
+        "v9_recent": 0.0,
+        "v9_weekly": 0.0,
+        "v10": 0.5429661612335579,
+        "v10_recent": 0.3220511895314521
+      },
+      "НКП": {
+        "v4": 0.0,
+        "v5": 0.0,
+        "v6": 0.0,
+        "v7": 0.0,
+        "v71": 0.0,
+        "v72_champion": 0.0,
+        "v77_recent": 0.0,
+        "v77_quantile60": 0.0,
+        "v8": 0.0,
+        "v8_recent": 0.0,
+        "v9": 0.0017692428827339372,
+        "v9_recent": 0.19184703003826542,
+        "v9_weekly": 0.0060715875215566865,
+        "v10": 0.5334659032136287,
+        "v10_recent": 0.26684623634381527
+      },
+      "РС": {
+        "v4": 0.0,
+        "v5": 0.0,
+        "v6": 0.0,
+        "v7": 0.0,
+        "v71": 0.0,
+        "v72_champion": 0.0,
+        "v77_recent": 0.0,
+        "v77_quantile60": 0.0,
+        "v8": 0.0,
+        "v8_recent": 0.0,
+        "v9": 0.00679859091869098,
+        "v9_recent": 0.13229766168835239,
+        "v9_weekly": 0.0,
+        "v10": 0.698169913128084,
+        "v10_recent": 0.16273383426487276
+      }
+    },
+    "axes": "[(['Канал'], 0.8), (['Канал', 'Сегмент_ABC'], 0.5), (['Бренд'], 0.3)]",
+    "tau": 0.52,
+    "pool": [
+      "v4",
+      "v5",
+      "v6",
+      "v7",
+      "v71",
+      "v72_champion",
+      "v77_recent",
+      "v77_quantile60",
+      "v8",
+      "v8_recent",
+      "v9",
+      "v9_recent",
+      "v9_weekly",
+      "v10",
+      "v10_recent"
+    ]
+  }
+}
