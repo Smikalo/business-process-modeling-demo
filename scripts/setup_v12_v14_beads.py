@@ -150,6 +150,30 @@ EPICS: list[Ticket] = [
             "executive summary committed."
         ),
     ),
+    Ticket(
+        key="P_EXT",
+        title="Phase EXT — Extended free open-data ingest (parallel sub-epic)",
+        type="epic", priority=1, parent="ROOT",
+        labels=["v12-v14", "phase-ext", "open-data"],
+        description=(
+            "Parallel sub-epic that fans out 31 free open-data ingest tickets "
+            "(UA macro, war-regional, attention, climate-calendar, logistics) "
+            "via 5 forager subagents, then runs a per-source A/B audit and "
+            "merges only A/B-winning sources into abt_v12_external. Pure CPU; "
+            "competes with no GPU resources. Combined expected lift: +2-4 p.p. "
+            "test SIMSCORE."
+        ),
+        design=(
+            "Plan in docs/v12_v14_extended_open_data.md. All sources free, "
+            "publication-lag declared, leakage-guarded. Each loader subclasses "
+            "BaseSignalLoader at src/loaders/<name>.py."
+        ),
+        acceptance=(
+            "≥ 8 survivors after A/B audit; abt_v12_external.parquet rebuilt "
+            "with survivors merged; tests/test_v12_abt_no_leakage.py passes; "
+            "ext_attribution.md shows ≥ +0.5 % val SIMSCORE vs V11 baseline."
+        ),
+    ),
 ]
 
 # ============== PHASE 0 — DAY 0 ==============
@@ -518,20 +542,32 @@ P1_TASKS: list[Ticket] = [
     ),
     Ticket(
         key="T2_4", parent="P1",
-        deps=["T1_1", "T1_2", "T2_1", "T2_2"],
+        deps=[
+            "T1_1", "T1_2", "T2_1", "T2_2",
+            # Priority-1 EXT sources fold into the initial V12 ABT directly.
+            # Lower-priority sources arrive via EXT_SURVIVOR_MERGE (consumed by T4_3).
+            "EXT_UKRSTAT_RTI", "EXT_UKRSTAT_BIRTHS", "EXT_UKRSTAT_INDPROD",
+            "EXT_NBU_CCI", "EXT_AIRRAID_OBLAST", "EXT_BLACKOUT_DTEK",
+            "EXT_IOM_IDP", "EXT_WIKI_PV", "EXT_ORTHODOX_CAL",
+        ],
         title="trainer: Build abt_v12_external.parquet (V11 ABT + new external features)",
         priority=2, estimate=120,
         labels=["phase1", "day2", "wave2", "subagent-trainer"],
         description=(
             "scripts/build_v12_external_abt.py: load output/abt_v10_cached.parquet, "
-            "merge in Google Trends features, FX volatility, school cal, payday, "
-            "Comtrade, war events. Strict period cutoff (feature for month M built "
-            "from data ≤ M-1 only) to prevent leakage."
+            "merge in Google Trends, FX volatility, school cal, payday, Comtrade, "
+            "war events, plus the 9 priority-1 EXT_* sources from Phase EXT "
+            "(Ukrstat RTI/births/indprod, NBU CCI, oblast air-raids, DTEK blackouts, "
+            "IOM IDP, Wikipedia pageviews, Orthodox calendar). Strict period cutoff "
+            "(feature for month M built from data with date < first day of M) to "
+            "prevent leakage. Lower-priority EXT sources are merged later via "
+            "EXT_SURVIVOR_MERGE after the per-source A/B gate."
         ),
         acceptance=(
             "output/abt_v12_external.parquet exists; row count == V10 ABT row count; "
-            "≥ 30 new feature columns; no NaN in macro-feature columns post-imputation; "
-            "leakage test in tests/test_v12_abt_no_leakage.py passes."
+            "≥ 50 new feature columns (was ≥ 30 before EXT expansion); no NaN in "
+            "macro-feature columns post-imputation; leakage test in "
+            "tests/test_v12_abt_no_leakage.py passes."
         ),
     ),
     Ticket(
@@ -669,14 +705,16 @@ P1_TASKS: list[Ticket] = [
         acceptance="3 _aw preds CSVs committed; OOF val ≥ 1 base improves vs non-aw.",
     ),
     Ticket(
-        key="T4_3", parent="P1", deps=["T4_2", "T2_5", "T2_3", "T1_3"],
+        key="T4_3", parent="P1",
+        deps=["T4_2", "T2_5", "T2_3", "T1_3", "EXT_SURVIVOR_MERGE"],
         title="trainer: V12 LAD search with bias ladder {1.0, 1.5, 2.0 %}",
         priority=1, estimate=180,
         labels=["phase1", "day4", "wave4", "subagent-trainer", "checkpoint"],
         description=(
             "scripts/v12_lad_search.py: pool = {V11 bagged bases, V12 bases, "
             "V12 _aw bases, Croston, V12 seasonal blend}. Bias ladder. Streaming "
-            "calibrator. Output V12.5 final preds."
+            "calibrator. Uses the EXT-survivor-merged ABT (priority-1 EXT_* + "
+            "any priority-2/3 sources that won the A/B gate). Output V12.5 final preds."
         ),
         acceptance=(
             "output/preds/v12/preds_v12.5_final_{val,test}.csv; "
@@ -1549,7 +1587,499 @@ P4_TASKS: list[Ticket] = [
     ),
 ]
 
-ALL: list[Ticket] = EPICS + P0_TASKS + P1_TASKS + P2_TASKS + P3_TASKS + P4_TASKS
+# ============== PHASE EXT — Extended free open-data ingest ==============
+#
+# 31 ingest tickets fan out in parallel after T0_10. Five forager subagents
+# divide the work by group (A: UA macro, B: war/region, C: attention,
+# D: climate/cal, E: logistics). Then EXT_AB_AUDIT runs per-source A/B,
+# EXT_SURVIVOR_MERGE rebuilds abt_v12_external keeping only winners.
+#
+# Ordering note: EXT_TASKS comes BEFORE P1_TASKS in the ALL list because
+# T2_4 (in P1_TASKS) depends on the 9 priority-1 EXT_* tickets.
+
+def _ext(
+    key: str,
+    title: str,
+    *,
+    priority: int,
+    estimate: int,
+    group: str,           # 'A' | 'B' | 'C' | 'D' | 'E'
+    description: str,
+    upstream: str = "",   # short upstream URL hint, used only in description
+    publication_lag: int = 7,
+    grain: str = "nat-month",
+    cols: int = 3,
+) -> Ticket:
+    """Helper to compactly define an EXT ingest ticket with consistent fields."""
+
+    full_desc = (
+        f"{description}\n\n"
+        f"Upstream: {upstream or '(see docs/v12_v14_extended_open_data.md)'}\n"
+        f"Grain: {grain}; publication-lag: {publication_lag} days; "
+        f"≈{cols} signal columns."
+    )
+    return Ticket(
+        key=key, parent="P_EXT", deps=["T0_10"],
+        title=title, type="task", priority=priority, estimate=estimate,
+        labels=[
+            "phase-ext", "open-data", "subagent-forager",
+            f"ext-group-{group.lower()}",
+            f"wave-ext-{group.lower()}",
+        ],
+        description=full_desc,
+        design=(
+            "Implement as src/loaders/<name>.py subclassing BaseSignalLoader. "
+            "Set name, signal_cols, join_keys, publication_lag_days, upstream_url. "
+            "Implement fetch_raw() (pure I/O) + transform() (monthly contract). "
+            "Register via @register_loader. Cache lands at "
+            "output/external/<name>.parquet + .meta.json with TTL=7 days. "
+            "Stale-cache fallback on network failure. UTF-8 / Cyrillic safe."
+        ),
+        acceptance=(
+            "Loader importable from src.loaders.<name>; cache parquet exists "
+            "with ≥ 60 monthly rows (or pair-static row count); meta.json "
+            "valid; smoke-test in tests/test_loader_<name>.py passes; loader "
+            "registered in src/loaders/__init__.py."
+        ),
+    )
+
+
+EXT_TASKS: list[Ticket] = [
+    # ----- GROUP A: UA macro & demographics (8 tickets) -----
+    _ext("EXT_UKRSTAT_RTI",
+         "forager-A: Ukrstat Retail Trade Index (índex roздрібного товарообігу)",
+         priority=1, estimate=120, group="A",
+         description=(
+             "Pull monthly Retail Trade Index from ukrstat.gov.ua (open data CSVs "
+             "or scraped tables). Yields 4 cols: rti_total, rti_food, rti_nonfood, "
+             "rti_yoy_pct. Strong macro proxy for discretionary spend."
+         ),
+         upstream="https://ukrstat.gov.ua/operativ/operativ2024/sr/srt/",
+         publication_lag=30, grain="nat-month", cols=4),
+
+    _ext("EXT_UKRSTAT_BIRTHS",
+         "forager-A: Ukrstat births by oblast × month (toy demand cohort)",
+         priority=1, estimate=150, group="A",
+         description=(
+             "Births by oblast × month. Toy demand strongly cohort-dependent: "
+             "0-3y items track births lagged 0-36 mo; 4-7y track births lagged "
+             "48-84 mo. Compute lagged cohort population proxies."
+         ),
+         upstream="https://ukrstat.gov.ua/operativ/operativ2023/ds/kn/",
+         publication_lag=60, grain="obl-month", cols=6),
+
+    _ext("EXT_UKRSTAT_INDPROD",
+         "forager-A: Ukrstat Industrial Production Index",
+         priority=1, estimate=90, group="A",
+         description=(
+             "Monthly Industrial Production Index. Proxy for general economic "
+             "health; correlates with B2B partner ordering cycles."
+         ),
+         upstream="https://ukrstat.gov.ua/operativ/operativ2023/pr/iovp/",
+         publication_lag=30, grain="nat-month", cols=3),
+
+    _ext("EXT_UKRSTAT_WAGES",
+         "forager-A: Ukrstat avg wages by industry/region",
+         priority=2, estimate=120, group="A",
+         description=(
+             "Avg monthly wages by oblast and by industry. Captures purchasing-"
+             "power shifts. Especially useful per-partner via partner-region join."
+         ),
+         upstream="https://ukrstat.gov.ua/operativ/operativ2023/gdn/Zarp_ek_p/",
+         publication_lag=60, grain="obl-month", cols=4),
+
+    _ext("EXT_NBU_CCI",
+         "forager-A: NBU Consumer Confidence + Inflation Expectations",
+         priority=1, estimate=90, group="A",
+         description=(
+             "NBU monthly household survey: consumer confidence index, inflation "
+             "expectations, business climate. Leading indicator for discretionary "
+             "spend like toys."
+         ),
+         upstream="https://bank.gov.ua/ua/statistic/sector-financial/data-sector-financial",
+         publication_lag=7, grain="nat-month", cols=5),
+
+    _ext("EXT_NBU_RATES",
+         "forager-A: NBU discount + lending rates",
+         priority=2, estimate=60, group="A",
+         description=(
+             "NBU discount rate + commercial lending rates daily, aggregated "
+             "monthly (avg, min, max). Captures credit-tightening regimes."
+         ),
+         upstream="https://bank.gov.ua/ua/statistic/sector-financial/data-sector-financial",
+         publication_lag=1, grain="nat-day-aggm", cols=4),
+
+    _ext("EXT_CUSTOMS_UA",
+         "forager-A: UA Customs Service detailed HS-95 imports",
+         priority=2, estimate=120, group="A",
+         description=(
+             "UA State Customs Service open data: detailed HS chapter 95 (toys, "
+             "games, sports goods) imports by month, by country of origin. "
+             "Complements UN Comtrade with sub-chapter resolution."
+         ),
+         upstream="https://customs.gov.ua/en/open-data",
+         publication_lag=30, grain="nat-month", cols=6),
+
+    _ext("EXT_FAO_FOOD",
+         "forager-A: FAO Global Food Price Index",
+         priority=3, estimate=60, group="A",
+         description=(
+             "FAO monthly food price index. Captures household-budget pressure "
+             "(food inflation crowds out toy spend)."
+         ),
+         upstream="https://www.fao.org/worldfoodsituation/foodpricesindex/en/",
+         publication_lag=7, grain="global-month", cols=2),
+
+    # ----- GROUP B: War / regional (5 tickets) -----
+    _ext("EXT_AIRRAID_OBLAST",
+         "forager-B: alerts.in.ua oblast × day air-raid alarms (granular)",
+         priority=1, estimate=120, group="B",
+         description=(
+             "Free API at alerts.in.ua: oblast × timestamp air-raid events. "
+             "Aggregate to monthly: alarm_hours_total, alarm_count, "
+             "max_streak_days_in_month, by oblast. Beats current national-only "
+             "signal in resolution."
+         ),
+         upstream="https://api.alerts.in.ua/v1/",
+         publication_lag=1, grain="obl-month", cols=4),
+
+    _ext("EXT_BLACKOUT_DTEK",
+         "forager-B: DTEK / Ukrenergo blackout schedule (oblast hours)",
+         priority=1, estimate=180, group="B",
+         description=(
+             "Scrape DTEK + Ukrenergo published blackout schedules (Telegram + "
+             "site). Compute: blackout_hours_per_day_avg, total_blackout_days, "
+             "by oblast × month. Behavioural proxy for indoor play / "
+             "non-electric toy demand spike."
+         ),
+         upstream="https://www.dtek.com/ + https://ua.energy/",
+         publication_lag=7, grain="obl-month", cols=3),
+
+    _ext("EXT_IOM_IDP",
+         "forager-B: IOM Displacement Tracking Matrix (IDP flows by destination)",
+         priority=1, estimate=90, group="B",
+         description=(
+             "IOM-DTM monthly survey: IDP counts by destination oblast. Major "
+             "demographic shift driver since 2022; partners in Lviv/Zakarpattia "
+             "saw +40-60 % child-population in 2022-2023."
+         ),
+         upstream="https://dtm.iom.int/ukraine",
+         publication_lag=30, grain="obl-month", cols=3),
+
+    _ext("EXT_UNHCR",
+         "forager-B: UNHCR refugee outflows by destination",
+         priority=2, estimate=60, group="B",
+         description=(
+             "UNHCR refugee data portal: monthly outflows from UA by destination "
+             "country. Proxy for outbound child-population draining demand."
+         ),
+         upstream="https://data.unhcr.org/en/situations/ukraine",
+         publication_lag=30, grain="nat-month", cols=2),
+
+    _ext("EXT_DEEPSTATE",
+         "forager-B: DeepStateMap frontline shifts (km² controlled)",
+         priority=3, estimate=120, group="B",
+         description=(
+             "DeepStateMap published monthly: km² of territory under UA control. "
+             "Δ km² = frontline shift, proxy for territorial-control change "
+             "shocks (returning markets, evacuated markets)."
+         ),
+         upstream="https://deepstatemap.live/",
+         publication_lag=7, grain="nat-month", cols=2),
+
+    # ----- GROUP C: Attention / cultural (7 tickets) -----
+    _ext("EXT_WIKI_PV",
+         "forager-C: Wikipedia Pageviews (en+uk+ru) for top-30 brand pages",
+         priority=1, estimate=120, group="C",
+         description=(
+             "Wikipedia Pageviews API (free, no auth). For top 30 toy "
+             "brands/franchises (Lego, Barbie, Hot Wheels, Funko, Pokémon, "
+             "Marvel, Disney, Squishmallow, Among Us, Minecraft, etc), pull "
+             "monthly pageviews in en + uk + ru. Strong leading indicator of "
+             "brand attention."
+         ),
+         upstream="https://wikimedia.org/api/rest_v1/metrics/pageviews/",
+         publication_lag=1, grain="nat-month", cols=30),
+
+    _ext("EXT_YOUTUBE",
+         "forager-C: YouTube Data API v3 — top kids unboxing channel views",
+         priority=2, estimate=180, group="C",
+         description=(
+             "YouTube Data API v3 (free quota = 10 000 units/day). Pull monthly "
+             "view counts for ~20 top UA / RU / EN-language kids unboxing channels. "
+             "Strong leading indicator (kids see → demand toy)."
+         ),
+         upstream="https://developers.google.com/youtube/v3 (free key signup)",
+         publication_lag=1, grain="nat-month", cols=8),
+
+    _ext("EXT_REDDIT",
+         "forager-C: Reddit brand mention counts (Pushshift archive)",
+         priority=3, estimate=120, group="C",
+         description=(
+             "Pushshift archive (free dump) for Reddit. Count monthly mentions "
+             "of toy brands / franchises in r/Lego, r/funkopop, r/toys, r/parenting, "
+             "r/babyshop. Note: Pushshift access has been intermittent post-2023; "
+             "fall back to Pullpush.io free mirror if needed."
+         ),
+         upstream="https://pullpush.io/api/",
+         publication_lag=1, grain="en-month", cols=6),
+
+    _ext("EXT_TMDB_KIDS",
+         "forager-C: TMDb extended kids/family release calendar (G/PG)",
+         priority=2, estimate=60, group="C",
+         description=(
+             "Extend existing tmdb_movies loader: filter to certification G/PG, "
+             "genre Family/Animation/Adventure. Compute monthly: "
+             "kids_film_releases_count, top_release_predicted_revenue, "
+             "franchise_continuation_flag. Drives licensed-toy demand spikes."
+         ),
+         upstream="https://developers.themoviedb.org/3 (free API key)",
+         publication_lag=1, grain="global-month", cols=4),
+
+    _ext("EXT_BOX_OFFICE",
+         "forager-C: Box Office Mojo top opening weekends (kids films)",
+         priority=3, estimate=90, group="C",
+         description=(
+             "Scrape Box Office Mojo monthly top-opening films, filter kids "
+             "(rated G/PG, family/animation). Convert to monthly "
+             "kids_film_box_office_usd; rolling 3-mo for licensed-toy halo."
+         ),
+         upstream="https://www.boxofficemojo.com/",
+         publication_lag=7, grain="global-month", cols=3),
+
+    _ext("EXT_STEAM",
+         "forager-C: Steam Charts CCU on top kid/family games",
+         priority=3, estimate=90, group="C",
+         description=(
+             "Steam Charts free site: monthly avg / peak CCU for top family-rated "
+             "games (Roblox-like substitutes, Among Us, Stardew Valley, Minecraft). "
+             "Older-kid substitution effect."
+         ),
+         upstream="https://steamcharts.com/",
+         publication_lag=1, grain="global-month", cols=3),
+
+    _ext("EXT_ROBLOX",
+         "forager-C: Roblox monthly active users",
+         priority=3, estimate=60, group="C",
+         description=(
+             "Roblox investor releases publish monthly DAU / MAU. Proxy for "
+             "8-12 yr substitute consumption."
+         ),
+         upstream="https://corp.roblox.com/news-room/",
+         publication_lag=30, grain="global-month", cols=2),
+
+    # ----- GROUP D: Climate / calendar (5 tickets) -----
+    _ext("EXT_OPENMETEO",
+         "forager-D: Open-Meteo regional weather (oblast capitals, granular)",
+         priority=2, estimate=120, group="D",
+         description=(
+             "Open-Meteo free historical API (no auth, no quota). Pull daily "
+             "T_avg, T_min, T_max, precipitation, snow_depth for 25 oblast "
+             "capitals 2020-01 → 2026-04. Aggregate to monthly. More granular "
+             "than current national-only weather_ua."
+         ),
+         upstream="https://open-meteo.com/en/docs/historical-weather-api",
+         publication_lag=1, grain="obl-month", cols=12),
+
+    _ext("EXT_DAYLIGHT",
+         "forager-D: Daylight hours by latitude × month (computed)",
+         priority=3, estimate=30, group="D",
+         description=(
+             "Deterministic computation from astropy or formula: daylight hours "
+             "per latitude × month for 25 oblast capitals. No API needed. Behavioral "
+             "proxy: long days = outdoor play, short days = indoor toys."
+         ),
+         upstream="(deterministic, astropy)",
+         publication_lag=0, grain="obl-month", cols=2),
+
+    _ext("EXT_ORTHODOX_CAL",
+         "forager-D: Orthodox religious calendar (Easter, Christmas, St. Nicholas)",
+         priority=1, estimate=60, group="D",
+         description=(
+             "Orthodox Easter date varies year-to-year (Julian-Gregorian). Encode: "
+             "is_orthodox_easter_month, orthodox_easter_date, days_to_st_nicholas, "
+             "days_to_orthodox_christmas, christmas_school_break_overlap_days. "
+             "Strong UA-cultural toy-gift signal."
+         ),
+         upstream="(deterministic, dateutil + manual table)",
+         publication_lag=0, grain="nat-month", cols=5),
+
+    _ext("EXT_LUNAR",
+         "forager-D: Lunar phases per month",
+         priority=4, estimate=30, group="D",
+         description=(
+             "Some retail studies show full-moon weekend purchase spikes. "
+             "Cheap to add (deterministic ephemeris)."
+         ),
+         upstream="(deterministic, astropy)",
+         publication_lag=0, grain="nat-month", cols=2),
+
+    _ext("EXT_AQI",
+         "forager-D: OpenAQ air quality index (oblast capitals)",
+         priority=3, estimate=120, group="D",
+         description=(
+             "OpenAQ free API for PM2.5 / PM10 / NO2 in oblast capitals, monthly "
+             "avg. Bad-air days → kids stay indoors → indoor-toy substitution."
+         ),
+         upstream="https://docs.openaq.org/",
+         publication_lag=1, grain="obl-month", cols=4),
+
+    # ----- GROUP E: Logistics / commerce (6 tickets) -----
+    _ext("EXT_GOOGLE_MOB",
+         "forager-E: Google Mobility Reports (UA, retail/recreation/transit)",
+         priority=2, estimate=60, group="E",
+         description=(
+             "Google COVID-19 Mobility Reports (still updated for some countries). "
+             "If discontinued for UA, fall back to historical archive 2020-2022. "
+             "Captures behavioural mobility in retail/recreation."
+         ),
+         upstream="https://www.google.com/covid19/mobility/",
+         publication_lag=7, grain="obl-month", cols=4),
+
+    _ext("EXT_OSM",
+         "forager-E: OpenStreetMap competitor density per partner",
+         priority=2, estimate=180, group="E",
+         description=(
+             "Geocode partner addresses via Nominatim (free); query Overpass API "
+             "for shop=toys + shop=baby_goods within 2 km radius. Static feature: "
+             "competitor_count_2km, big_competitor_within_5km. Pair-static, joins on partner."
+         ),
+         upstream="https://overpass-api.de/ + https://nominatim.org/",
+         publication_lag=0, grain="pair-static", cols=4),
+
+    _ext("EXT_BRENT",
+         "forager-E: Brent crude + commodity prices",
+         priority=3, estimate=60, group="E",
+         description=(
+             "Yfinance (free) or worldbank for monthly Brent crude USD/bbl + "
+             "wheat + corn USD/t. Fuel-price proxy for logistics; agricultural "
+             "for household budget."
+         ),
+         upstream="(yfinance, worldbank)",
+         publication_lag=1, grain="global-month", cols=4),
+
+    _ext("EXT_BALTIC_DRY",
+         "forager-E: Baltic Dry Index + container shipping rates",
+         priority=3, estimate=90, group="E",
+         description=(
+             "Baltic Exchange publishes BDI; Drewry publishes weekly WCI free "
+             "quote. Container freight cost is significant for Asia→UA toys "
+             "supply chain."
+         ),
+         upstream="https://www.balticexchange.com/ + https://www.drewry.co.uk/",
+         publication_lag=1, grain="global-month", cols=3),
+
+    _ext("EXT_MARINE",
+         "forager-E: Marine Traffic Black Sea ports congestion",
+         priority=4, estimate=120, group="E",
+         description=(
+             "Marine Traffic free tier (rate-limited) for Odesa / Chornomorsk / "
+             "Pivdennyi port: vessel arrivals, anchorage queue. Proxy for import-"
+             "delay risk for toys arriving by sea."
+         ),
+         upstream="https://www.marinetraffic.com/en/data/api",
+         publication_lag=1, grain="port-month", cols=4),
+
+    _ext("EXT_BTC",
+         "forager-E: BTC + ETH + USDT prices (UA crypto adoption proxy)",
+         priority=4, estimate=60, group="E",
+         description=(
+             "CoinGecko free API: monthly OHLC for BTC, ETH, USDT in USD. UA "
+             "has high consumer crypto adoption; crypto wealth shocks correlate "
+             "with discretionary spend."
+         ),
+         upstream="https://www.coingecko.com/en/api",
+         publication_lag=1, grain="global-month", cols=6),
+
+    # ----- SYNTHESIS & GATING -----
+    Ticket(
+        key="EXT_AB_AUDIT", parent="P_EXT",
+        deps=[
+            # Wait for EVERY ingest ticket so we can A/B every column. Lower-prio
+            # sources that fail to ingest become 'wontfix'; the auditor handles
+            # that gracefully and skips them in the per-source ablation.
+            "EXT_UKRSTAT_RTI", "EXT_UKRSTAT_BIRTHS", "EXT_UKRSTAT_INDPROD",
+            "EXT_UKRSTAT_WAGES", "EXT_NBU_CCI", "EXT_NBU_RATES",
+            "EXT_CUSTOMS_UA", "EXT_FAO_FOOD",
+            "EXT_AIRRAID_OBLAST", "EXT_BLACKOUT_DTEK", "EXT_IOM_IDP",
+            "EXT_UNHCR", "EXT_DEEPSTATE",
+            "EXT_WIKI_PV", "EXT_YOUTUBE", "EXT_REDDIT", "EXT_TMDB_KIDS",
+            "EXT_BOX_OFFICE", "EXT_STEAM", "EXT_ROBLOX",
+            "EXT_OPENMETEO", "EXT_DAYLIGHT", "EXT_ORTHODOX_CAL",
+            "EXT_LUNAR", "EXT_AQI",
+            "EXT_GOOGLE_MOB", "EXT_OSM", "EXT_BRENT",
+            "EXT_BALTIC_DRY", "EXT_MARINE", "EXT_BTC",
+        ],
+        title="auditor: Per-source A/B ablation (which EXT_* sources actually help?)",
+        type="task", priority=1, estimate=240,
+        labels=["phase-ext", "subagent-auditor", "audit", "decision"],
+        description=(
+            "scripts/v12_ext_ab_audit.py: for each EXT_* source, train two "
+            "LightGBM models: baseline (no source) vs treatment (baseline + "
+            "source columns only). Evaluate Δ OOF SIMSCORE val over 5 folds. "
+            "Decision rule: keep iff Δ ≥ +0.10 % AND bias not worsened > 0.5 %. "
+            "Survivor list → output/audits/ext_survivors.json. Audit narrative "
+            "→ output/audits/ext_ab_audit.md."
+        ),
+        design=(
+            "Reuse src/external_data.py loaders to fetch each source's columns. "
+            "Train via scripts/train_v7.py with --feature-subset. Aggregate "
+            "OOF SIMSCORE per source. Sort by Δ. Print sortable table. "
+            "Sources marked wontfix in beads are skipped."
+        ),
+        acceptance=(
+            "ext_survivors.json lists ≥ 8 survivors; ext_ab_audit.md committed "
+            "with sortable per-source table; if < 8 survive, escalation ticket "
+            "auto-created (manual review)."
+        ),
+    ),
+    Ticket(
+        key="EXT_SURVIVOR_MERGE", parent="P_EXT", deps=["EXT_AB_AUDIT", "T2_4"],
+        title="trainer: Rebuild abt_v12_external with EXT survivors merged",
+        type="task", priority=1, estimate=120,
+        labels=["phase-ext", "subagent-trainer"],
+        description=(
+            "scripts/v12_ext_survivor_merge.py: read ext_survivors.json; for "
+            "any priority-2/3 source on the list that wasn't already in the "
+            "initial T2_4 build, append its columns to abt_v12_external.parquet "
+            "(preserving the leakage cutoff). For sources NOT on the survivor "
+            "list (including priority-1 ones if they fail audit — rare but "
+            "honest), drop their columns from the ABT. Re-run leakage test."
+        ),
+        design=(
+            "Idempotent rebuild. Snapshot pre-merge ABT to "
+            "output/abt_v12_external.pre_merge.parquet for diff. Diff committed "
+            "to output/audits/ext_merge_diff.md."
+        ),
+        acceptance=(
+            "abt_v12_external.parquet survivor-merged; "
+            "tests/test_v12_abt_no_leakage.py passes; "
+            "output/audits/ext_merge_diff.md committed; columns count "
+            "≥ baseline + 8."
+        ),
+    ),
+    Ticket(
+        key="EXT_LOG", parent="P_EXT", deps=["EXT_SURVIVOR_MERGE"],
+        title="parent: LOG.md Phase EXT retrospective",
+        type="task", priority=3, estimate=20,
+        labels=["phase-ext", "subagent-parent", "log"],
+        description=(
+            "Append a Phase EXT entry to LOG.md: how many sources attempted, "
+            "how many survived A/B, total ABT column count delta, what dropped "
+            "and why. Commit + push."
+        ),
+        acceptance="LOG.md updated; commit pushed.",
+    ),
+]
+
+
+# Ordering matters at create time: T2_4 (in P1_TASKS) depends on the
+# priority-1 EXT_* ingest tickets, so EXT_TASKS must be created BEFORE
+# P1_TASKS. Similarly, T4_3 depends on EXT_SURVIVOR_MERGE, which is also
+# in EXT_TASKS — same ordering constraint.
+ALL: list[Ticket] = (
+    EPICS + P0_TASKS + EXT_TASKS + P1_TASKS + P2_TASKS + P3_TASKS + P4_TASKS
+)
 
 # ---------------------------------------------------------------- HELPERS
 
