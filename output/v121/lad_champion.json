@@ -1,0 +1,38 @@
+{
+  "champion_name": "v10+all_v12_tau0.52_ch08_chABC_brand",
+  "tier": 2,
+  "ceiling": 1.0,
+  "OOF_recency": 0.4106,
+  "OOF_bias_recency_pct": -0.458,
+  "fold_biases": [
+    -1.661,
+    0.973,
+    -0.836
+  ],
+  "last_two_agree": false,
+  "test_simscore_raw_lad": 0.4568,
+  "test_wape_raw_lad": 0.3969,
+  "test_bias_pct_raw_lad": 3.856,
+  "pool": [
+    "v4",
+    "v5",
+    "v6",
+    "v7",
+    "v71",
+    "v72_champion",
+    "v77_recent",
+    "v77_quantile60",
+    "v8",
+    "v8_recent",
+    "v9",
+    "v9_recent",
+    "v9_weekly",
+    "v10",
+    "v10_recent",
+    "v12_multiseed",
+    "v12_intermittent",
+    "v12_external"
+  ],
+  "axes": "[(['Канал'], 0.8), (['Канал', 'Сегмент_ABC'], 0.5), (['Бренд'], 0.3)]",
+  "tau": 0.52
+}

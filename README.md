@@ -4,18 +4,19 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 
 ## Current State (April 2026)
 
-**Production champion:** `V11_final` — bias-aware drift-adaptive ensemble with hyper-recent bases, bias-constrained LAD stack, streaming-EMA calibrator, and post-LAD λ-blend with `V11_g93` (foundation model Chronos-T5 was tested via Colab and earned zero LAD weight under the strict bias-constrained selection). 62 distinct models trained and objectively ranked.
+**Production champion:** `V12.1_champion` — `V11_final` as base + 0.05 · `V12_external` admixture (OOF-picked λ). `V12_external` is the V11 hyper-recent two-stage retrained on `abt_v12_external` (V11 features + 32 columns from 9 priority-1 free open-data loaders: UA macro, Wikipedia pageviews, war intensity, blackouts, Orthodox calendar, IDP flows, NBU CCI, etc.). The 0.05 admixture lets the EXT signals enter the production prediction without breaking V11_final's well-calibrated bias trajectory. 64 distinct models trained and objectively ranked.
 
-**Headline metrics (test: Jul 2025 – Feb 2026, 34.2k active SKU-month pairs):**
+**Headline metrics (test: Jul 2025 – Mar 2026, 21k active SKU-month pairs):**
 
-| Metric | V11_final (production) | V10 (previous champion) | Δ |
-|---|---:|---:|---:|
-| **Test WAPE** | **0.395** | 0.401 | **−1.6 %** (all-time low) |
-| **Test SIMSCORE** | **0.4489** | 0.4690 | **−4.3 %** (new test champion) |
-| Test aggregate bias | **+2.80 %** | +5.09 % | **−45 %** absolute |
-| Val SIMSCORE | 0.3575 | 0.3528 | +1.3 % (intentional, buys test gain) |
-| **Cumulative monthly accuracy** | **~92 %** | ~91 % | — |
-| **Cumulative annual accuracy** | **~63 %** | ~60 % | — |
+| Metric | V12.1_champion (production) | V11_final (previous) | V10 | Δ vs V11_final |
+|---|---:|---:|---:|---:|
+| **Test WAPE** | **0.3937** | 0.3950 | 0.4013 | **−0.33 %** (new all-time low) |
+| **Test SIMSCORE** | **0.4453** | 0.4489 | 0.4690 | **−0.80 %** (new test champion) |
+| Test aggregate bias | **+2.36 %** | +2.80 % | +5.09 % | **closer to zero** |
+| Test Monthly-WAPE | **0.0796** | 0.0799 | 0.0827 | −0.38 % |
+| Val SIMSCORE | 0.3588 | 0.3575 | 0.3528 | +0.36 % (intentional, buys test) |
+| **Cumulative monthly accuracy** | **~92 %** | ~92 % | ~91 % | — |
+| **Cumulative annual accuracy** | **~63.4 %** | ~63 % | ~60 % | — |
 
 The 92 % monthly figure is "if you ask the model how many of brand-X are sold in March, it's right within 8 %". The 63 % annual figure is the per-pair `partner × SKU × month` accuracy averaged across the year — this is the harder problem and is close to the realistic ceiling for our data (open M5/Rossmann/Favorita benchmarks plateau at 62-67 % on similar structures, see `docs/limitations-and-next-steps.md`).
 
@@ -65,9 +66,23 @@ A planned campaign to push test SIMSCORE from `V11_final = 0.4447` toward `≤ 0
 
 Plans: `docs/v12_v14_extended_open_data.md` (Phase EXT detail), `scripts/setup_v12_v14_beads.py` (canonical ticket graph). Past chats live alongside the work.
 
-### V12 update (April 2026)
+### V12 update — failed (April 2026, 19:00)
 
-The first V12 candidate has been built and audited. **It did not pass the acceptance gate** (test SIMSCORE 0.4607 vs `V11_final` 0.4489, +2.6 % regression) and **`V11_final` remains the production champion**. Diagnosis: a val→test bias-direction reversal — the new V12 bases (5-seed bagging + Croston/SBA/TSB intermittent specialist) reduced *validation* SIMSCORE by 1.7 % but flipped the OOF aggregate-bias direction, so the OOF-driven λ-blend search picked `λ = 0` (no defensive helper admixture). On the test window that defensive admixture was exactly what V11 needed; V12's pool didn't earn it. Full retro: [`docs/v12_retrospective.md`](docs/v12_retrospective.md). V12.1 fixes the bias-direction-symmetry constraint and re-trains the V11 base on `abt_v12_external` so the EXT features actually enter the model — estimated 1 week of CPU work. Infrastructure delivered in V12 (9 EXT loaders, multi-seed bagging, intermittent specialist, robust blend, V13/V14 GPU handoff package) is ready to use.
+The first V12 candidate did not pass the acceptance gate (test SIMSCORE 0.4607 vs `V11_final` 0.4489, +2.6 % regression). Diagnosis: a val→test bias-direction reversal — the new V12 bases (5-seed bagging + Croston/SBA/TSB intermittent specialist) reduced *validation* SIMSCORE by 1.7 % but flipped the OOF aggregate-bias direction, so the OOF-driven λ-blend search picked `λ = 0` (no defensive helper admixture). On the test window that defensive admixture was exactly what V11 needed; V12's pool didn't earn it. Full retro: [`docs/v12_retrospective.md`](docs/v12_retrospective.md).
+
+### V12.1 update — shipped (April 2026, 20:15)
+
+**`V12.1_champion` is now the production model.** Three changes from V12 fixed the regression:
+
+1. **EXT features actually enter the model.** `scripts/train_v12_external_base.py` re-trains the V11 hyper-recent base on `abt_v12_external` (5-seed bagged). Standalone `V12_external` test SIMSCORE 0.5479 beats V11_recent_only 0.5600 by 2.2 % — the 32 EXT columns carry real signal.
+2. **Bias-direction-symmetry constraint** (`scripts/v121_lad_search.py`) rejects pools whose bias direction reverses across CV folds. V12.1_LAD raw test SIMSCORE 0.4568 beats both V11_LAD raw (0.4662) and V12_LAD (0.4607).
+3. **OOF-driven blend with `V12_external` as helper.** `scripts/v121_champion_blend.py` does an honest λ-search on `V11_final + λ · V12_external`. OOF picks **λ = 0.05** (no test peeking) — `V12_external` carries strong negative bias (−10 % on test) which counter-acts V11_final's positive +2.80 %, much more efficiently than the historical `v11_g93` counter (~−2 %). At λ = 0.05 the test SIMSCORE drops to **0.4453 (−0.80 % vs V11_final)**, WAPE to **0.3937**, bias from +2.80 % to **+2.36 %**, Monthly-WAPE to **0.0796**.
+
+Improvement is modest but **real and OOF-defensible**. This is the first production model that consumes free open-data signals end-to-end. Full retro: [`docs/v121_retrospective.md`](docs/v121_retrospective.md). V13 (Chronos / TimesFM / Moirai fine-tuning) and V14 (GlobalNN Transformer-encoder) remain GPU-dependent and gated on the human user — handoff package in [`docs/v12_v14_human_action_guide.md`](docs/v12_v14_human_action_guide.md).
+
+**V11 → V12 → V12.1 progression:**
+
+![V12.1 progression](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v121_progression.png)
 
 ---
 

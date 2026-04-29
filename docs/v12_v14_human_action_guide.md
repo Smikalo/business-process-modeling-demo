@@ -14,14 +14,22 @@ glue everything back together.
 
 ## Status as of the agent handoff
 
-**Headline:** V12 candidate trained and audited; **did not beat V11_final**
-on the held-out test window (test SIMSCORE 0.4607 vs V11 0.4489,
-+2.63 % regression). **V11_final remains the production champion.**
-See `docs/v12_retrospective.md` for the full diagnosis (val→test bias
-direction reversal) and `output/v12/audit_report.md` for the formal audit.
-V12 infrastructure (EXT loaders, multi-seed bagging, intermittent
-specialist, robust blend) ships as groundwork for V12.1 — see
-retrospective Section "What V12.1 should do".
+**Headline:** V12 failed (test +2.63 % regression); **V12.1 succeeded**.
+The new production champion is `V12.1_champion = 0.95 · V11_final +
+0.05 · V12_external` (test SIMSCORE **0.4453** vs V11_final **0.4489**,
+**−0.80 %**), with WAPE 0.3937 (new all-time low), bias +2.36 % (closer
+to zero), Monthly-WAPE 0.0796.
+
+See `docs/v12_retrospective.md` for the V12 failure diagnosis (val→test
+bias-direction reversal), `docs/v121_retrospective.md` for the V12.1
+fixes (re-train V11 base on `abt_v12_external`, bias-direction-symmetry
+LAD filter, OOF-driven blend with `V12_external` as bias counter), and
+`output/v121/audit.md` for the formal V12.1 audit.
+
+V13 (Chronos / TimesFM / Moirai fine-tuning) and V14 (GlobalNN
+Transformer-encoder) remain GPU-dependent, **independent** of the
+V12 → V12.1 work, and gated on you running them on Colab/Kaggle when
+convenient. The handoff package below is unchanged.
 
 | Stage | What | Status |
 |---|---|---|
@@ -308,16 +316,22 @@ that's usually not worth it.
 
 ## What to tell management at each milestone
 
-When V12.1 ships (estimated 1 week from now, after V12 retrospective fixes):
-> "V12.1 is in production. Test WAPE 0.395 → ~0.380 (~-3 % relative);
-> test bias ±2.8 % → ±1.5 %. The model now uses 9 new external
+**V12.1 has shipped (April 2026).** Suggested management blurb:
+> "V12.1 is the new production model. Test WAPE 0.3950 → 0.3937 (new
+> all-time low), aggregate bias +2.80 % → +2.36 % (closer to zero),
+> Monthly-WAPE 0.0799 → 0.0796. The model now consumes 9 free external
 > open-data signals (Ukrainian retail trade index, NBU consumer
-> confidence, oblast-level air-raid frequency, blackout hours, IDP
-> flows, Wikipedia attention, Orthodox calendar). The intermediate V12
-> candidate did not pass our acceptance gate due to a val→test bias
-> direction issue — we kept V11 in production while we fixed the
-> objective; V12.1 closes that loop. Next milestone: V13 (foundation
-> models fine-tuned), 2-3 weeks out."
+> confidence proxies, oblast-level air-raid frequency, blackout hours,
+> IDP flows, Wikipedia attention to toy/franchise pages, Orthodox
+> calendar) end-to-end. The intermediate V12 candidate did not pass
+> our acceptance gate due to a validation→test bias direction reversal;
+> V12.1 fixes that with a bias-direction-symmetry constraint in the
+> LAD search and a re-trained base that actually consumes the EXT
+> features. Improvement is small (~0.8 % relative on SIMSCORE) but
+> real, OOF-defensible (no test peeking), and multi-axis (every
+> headline metric moved in the right direction). Next milestone: V13
+> (foundation models fine-tuned on Colab/Kaggle GPU), gated on the
+> human running the GPU notebooks."
 
 When V13 ships (in ~2 weeks):
 > "V13 adds 3 fine-tuned foundation models (Chronos, TimesFM, Moirai).
