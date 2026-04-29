@@ -1,0 +1,9 @@
+metric,value
+convergence_band_lo,0.436666436680435
+convergence_band_hi,0.5241092074653885
+v11_final_test_simscore,0.4447110969891336
+v11_test_aware_test_simscore,0.436666436680435
+test_peeked_headroom_pct,1.8089632489866052
+pct_pairs_within_2x_poisson_floor,90.37267080745342
+external_benchmark_low,58.0
+external_benchmark_high,67.0

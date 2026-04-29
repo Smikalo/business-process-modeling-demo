@@ -37,6 +37,18 @@ The 92 % monthly figure is "if you ask the model how many of brand-X are sold in
 
 ![V11 dashboard](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_dashboard.png)
 
+**V11 quality showcase** — production-model deep-dive on the full 19-month timeline with a ±1σ residual envelope, per-channel residual violins, top-100 SKU vs long-tail performance, calibration scatter, rolling MAE/WAPE, and the row-level residual distribution:
+
+![V11 quality showcase](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_quality_showcase.png)
+
+**V11 superiority showcase** — V11_final's position among all 62 models on the val × test plane with the Pareto frontier, a 6-axis radar versus the previous champion and the seasonal-naive baseline, the top-15 ranked-by-test-SIMSCORE table, and the V1 → V11 family-best progression with the three biggest leaps annotated:
+
+![V11 superiority showcase](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_superiority.png)
+
+**Why we are at the DATA ceiling, not the algorithm ceiling** — four independent lines of evidence: (1) five fundamentally different model architectures all collapse to the same convergence band; (2) the test-peeked V11_test_aware sets a hard upper bound just 1.8 % below V11_final; (3) per-pair RMSE tracks the theoretical Poisson noise floor √λ for ~90 % of pairs; (4) external Kaggle benchmarks plateau in the same 58–67 % band:
+
+![Data ceiling proof](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_data_ceiling_proof.png)
+
 ### Roadmap — V12 → V14 (next 4 weeks)
 
 A planned campaign to push test SIMSCORE from `V11_final = 0.4447` toward `≤ 0.420`, all under a strict zero-budget constraint (free Colab + Kaggle GPU only, no card on file). Tracked in `beads` as **159 tickets / 251 dependencies / 45 parallel waves** across 5 subagents.
