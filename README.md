@@ -23,19 +23,19 @@ The 92 % monthly figure is "if you ask the model how many of brand-X are sold in
 
 **V1 → V11 progression** — every released version on a single axis (test SIMSCORE, test WAPE, monthly-WAPE, bias):
 
-![V1 → V11 progression](output/plot_v11_progression.png)
+![V1 → V11 progression](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_progression.png)
 
 **V11 vs V10 head-to-head on a real timeline** — predicted vs actual monthly totals + per-month RMSE comparison:
 
-![V10 vs V11 timeline](output/plot_v11_vs_v10_timeline.png)
+![V10 vs V11 timeline](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_vs_v10_timeline.png)
 
 **Objective comparison of all 62 models** — every version, variant and ablation ranked by held-out test SIMSCORE:
 
-![All 62 models compared](output/plot_all_models_comparison.png)
+![All 62 models compared](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_all_models_comparison.png)
 
 **V11 dashboard** — 6-panel diagnostic on the production model (per-channel bias, residual scatter, monthly fit, LAD weights, calibration, feature importance):
 
-![V11 dashboard](output/plot_v11_dashboard.png)
+![V11 dashboard](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_dashboard.png)
 
 ### Roadmap — V12 → V14 (next 4 weeks)
 
