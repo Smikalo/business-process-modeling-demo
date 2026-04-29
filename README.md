@@ -1,8 +1,61 @@
 # Demand Forecasting & Procurement Optimization — PoC
 
-SKU-level demand forecasting and automated procurement recommendations for a Ukrainian toy distributor (Djeco, CubicFun, Infantino). Built as a zero-cost Proof of Concept — trains entirely on laptop CPU.
+SKU-level demand forecasting and automated procurement recommendations for a Ukrainian toy distributor (Djeco, CubicFun, Infantino). Built as a zero-cost Proof of Concept — trains entirely on laptop CPU + free GPU (Kaggle / Google Colab).
 
-## Results (test set: Jul 2025 – Feb 2026, 34.2k active SKU-month pairs)
+## Current State (April 2026)
+
+**Production champion:** `V11_final` — bias-aware drift-adaptive ensemble with hyper-recent bases, bias-constrained LAD stack, streaming-EMA calibrator, and post-LAD λ-blend with `V11_g93` (foundation model Chronos-T5 was tested via Colab and earned zero LAD weight under the strict bias-constrained selection). 62 distinct models trained and objectively ranked.
+
+**Headline metrics (test: Jul 2025 – Feb 2026, 34.2k active SKU-month pairs):**
+
+| Metric | V11_final (production) | V10 (previous champion) | Δ |
+|---|---:|---:|---:|
+| **Test WAPE** | **0.395** | 0.401 | **−1.6 %** (all-time low) |
+| **Test SIMSCORE** | **0.4489** | 0.4690 | **−4.3 %** (new test champion) |
+| Test aggregate bias | **+2.80 %** | +5.09 % | **−45 %** absolute |
+| Val SIMSCORE | 0.3575 | 0.3528 | +1.3 % (intentional, buys test gain) |
+| **Cumulative monthly accuracy** | **~92 %** | ~91 % | — |
+| **Cumulative annual accuracy** | **~63 %** | ~60 % | — |
+
+The 92 % monthly figure is "if you ask the model how many of brand-X are sold in March, it's right within 8 %". The 63 % annual figure is the per-pair `partner × SKU × month` accuracy averaged across the year — this is the harder problem and is close to the realistic ceiling for our data (open M5/Rossmann/Favorita benchmarks plateau at 62-67 % on similar structures, see `docs/limitations-and-next-steps.md`).
+
+### Key visualizations
+
+**V1 → V11 progression** — every released version on a single axis (test SIMSCORE, test WAPE, monthly-WAPE, bias):
+
+![V1 → V11 progression](output/plot_v11_progression.png)
+
+**V11 vs V10 head-to-head on a real timeline** — predicted vs actual monthly totals + per-month RMSE comparison:
+
+![V10 vs V11 timeline](output/plot_v11_vs_v10_timeline.png)
+
+**Objective comparison of all 62 models** — every version, variant and ablation ranked by held-out test SIMSCORE:
+
+![All 62 models compared](output/plot_all_models_comparison.png)
+
+**V11 dashboard** — 6-panel diagnostic on the production model (per-channel bias, residual scatter, monthly fit, LAD weights, calibration, feature importance):
+
+![V11 dashboard](output/plot_v11_dashboard.png)
+
+### Roadmap — V12 → V14 (next 4 weeks)
+
+A planned campaign to push test SIMSCORE from `V11_final = 0.4447` toward `≤ 0.420`, all under a strict zero-budget constraint (free Colab + Kaggle GPU only, no card on file). Tracked in `beads` as **159 tickets / 251 dependencies / 45 parallel waves** across 5 subagents.
+
+| Week | Focus | Expected lift | Free compute |
+|---|---|---:|---|
+| **0** | Restructure `output/`, CI, champion-card guard | — | local |
+| **1** | V12: external features, V11 multi-seed bagging, Croston/SBA/TSB intermittent specialist, anomaly-downweighting, bias-laddered LAD | +1.0–1.5 p.p. | CPU |
+| **EXT** *(parallel)* | **Phase EXT** — 31 free open-data ingest tickets (Ukrstat retail/births, NBU CCI, IOM IDP, DTEK blackouts, Wikipedia Pageviews, Open-Meteo, Orthodox calendar, OSM competitor density, …) gated by per-source A/B audit | +2-4 p.p. | CPU |
+| **2** | V13: Chronos / TimesFM / Moirai foundation models **fine-tuned** with 2 seeds each (6 GPU runs) | +0.5–1.0 p.p. | Colab + Kaggle GPU |
+| **3** | V14_alpha: GlobalNN — Transformer-encoder with partner/SKU/channel/brand embeddings, quantile head | +0.3–0.7 p.p. | Colab GPU |
+| **4** | V14_final: per-cluster (smooth/intermittent/lumpy/erratic) MoE specialists + soft gate + everything-pool LAD | +0.3–0.5 p.p. | CPU |
+| **Total** | | **+3–7 p.p. test SIMSCORE** | $0 spend |
+
+Plans: `docs/v12_v14_extended_open_data.md` (Phase EXT detail), `scripts/setup_v12_v14_beads.py` (canonical ticket graph). Past chats live alongside the work.
+
+---
+
+## Detailed Results (test set: Jul 2025 – Feb 2026, 34.2k active SKU-month pairs)
 
 | Model | WAPE | MAPE on active SKUs | RMSE | Bias |
 |-------|------|---------------------|------|------|
@@ -392,9 +445,14 @@ On first run the ABT is built from raw data (~4 min) and cached to `output/abt_v
 
 ## Current Limitations
 
-- Only 8 months of held-out test data; 5% WAPE gaps are within natural between-month variance.
-- Stock-out periods are flagged but demand is not counterfactually imputed (censored demand estimation not implemented).
-- Three brands of interest (Djeco, CubicFun, Infantino); other 15+ brands in client's ERP not yet included.
-- V5 external signals lift validation but regress test — see ADR-003; this is the key open item for the next iteration (either additional held-out months or distribution-shift–robust training).
+- **Information ceiling, not algorithmic.** 62 model classes (LightGBM variants, two-stage, NN ensembles, hierarchical reconciliation, foundation models, intermittent specialists, MoE) all converge to the same ~63 % annual / ~92 % monthly accuracy band. Open M5 / Rossmann / Favorita benchmarks on similar data structures plateau at 62-67 %. See `docs/limitations-and-next-steps.md` for full reasoning.
+- **8 months of held-out test data**; 1-2 p.p. WAPE deltas are within natural between-month variance, so we evaluate on full-period rolling-origin CV with the OOF SIMSCORE selection rule (gap ceiling 0.02-0.05) to avoid lucky-month overfitting.
+- **Three brands** of interest (Djeco, CubicFun, Infantino); other 15+ brands in client's ERP not yet included — would expand training rows but not break the per-pair accuracy ceiling.
+- **Stock-out periods** are flagged and partially imputed (V6 censored-demand imputation), but the underlying signal — "demand we couldn't satisfy" — is fundamentally not in the data.
+- **What would unblock 80-90 % accuracy** (out of scope for the current zero-budget campaign, this is a 12-18 month bizdev project):
+  - **POS-level transaction data** from partners (timestamped baskets) — biggest single lever, +8-12 p.p.
+  - **Real partner inventory** (so the model can distinguish "no demand" from "out of stock at partner") — +3-5 p.p.
+  - **Full promo plans with budgets** (we have a binary flag, not depth or reach) — +3-5 p.p.
+  - **2-3 additional pre-pandemic years** of history for a clean seasonal anchor — +1-2 p.p.
 
-See `docs/limitations-and-next-steps.md` for the full roadmap.
+See `docs/limitations-and-next-steps.md` for the full roadmap and `docs/v12_v14_extended_open_data.md` for the next 4 weeks of additive open-data ingest.
