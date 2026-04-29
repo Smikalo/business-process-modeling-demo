@@ -1,0 +1,16 @@
+{
+  "source_name": "airraid_oblast",
+  "fetch_timestamp": "2026-04-29T12:21:48+00:00",
+  "upstream_url": "https://api.alerts.in.ua/v1 + synthetic fallback",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "32446257e8277b0f",
+  "signal_cols": [
+    "airraid_total_hours_month",
+    "airraid_alerts_count_month",
+    "airraid_avg_duration_min",
+    "airraid_high_intensity_oblasts"
+  ],
+  "publication_lag_days": 1
+}

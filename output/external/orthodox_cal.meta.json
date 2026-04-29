@@ -1,0 +1,17 @@
+{
+  "source_name": "orthodox_cal",
+  "fetch_timestamp": "2026-04-29T12:22:19+00:00",
+  "upstream_url": "computed (Computus + Julian-calendar feasts; offline)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "7a2bd304a4fb8b1a",
+  "signal_cols": [
+    "is_orthodox_christmas_month",
+    "is_orthodox_easter_month",
+    "is_st_nicholas_month",
+    "days_to_orthodox_easter",
+    "is_lent_month"
+  ],
+  "publication_lag_days": 0
+}

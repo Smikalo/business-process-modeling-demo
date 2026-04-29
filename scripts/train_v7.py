@@ -118,7 +118,7 @@ def _save_preds(df: pd.DataFrame, preds: np.ndarray, path: Path) -> None:
     out.to_csv(path, index=False)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", default="target_qty_imputed")
     ap.add_argument("--alpha", type=float, default=0.45,
@@ -150,7 +150,13 @@ def main() -> int:
     ap.add_argument("--save-tag", default="",
                     help="Suffix for saved artefacts (model_v7{_tag}.joblib, "
                          "preds_v7{_tag}_*.csv).  Empty keeps the default V7 paths.")
-    args = ap.parse_args()
+    ap.add_argument("--seed", type=int, default=None,
+                    help="V12 multi-seed bagging hook: when set, propagates to "
+                         "LightGBM `seed` (controls feature/bagging/data RNG) "
+                         "in BOTH stages of the base TwoStageForecaster AND in "
+                         "the per-segment residual corrector.  None = library "
+                         "defaults (LightGBM seed=0).")
+    args = ap.parse_args(argv)
 
     tag = f"_{args.save_tag}" if args.save_tag else ""
 
@@ -201,10 +207,18 @@ def main() -> int:
     # which supports them.
     reg_objective_name = "pinball_custom" if args.monotone else "pinball"
 
+    clf_params_extra: dict = {
+        "num_leaves": 127, "learning_rate": 0.05, "min_child_samples": 30,
+    }
+    if args.seed is not None:
+        clf_params_extra["seed"] = int(args.seed)
+        reg_params["seed"] = int(args.seed)
+        log.info("V12 multi-seed: LightGBM seed=%d propagated to clf+reg", args.seed)
+
     def _fit_base(train_df: pd.DataFrame, val_df: pd.DataFrame,
                   sw_t: np.ndarray | None, sw_v: np.ndarray | None) -> TwoStageForecaster:
         b = TwoStageForecaster(
-            clf_params={"num_leaves": 127, "learning_rate": 0.05, "min_child_samples": 30},
+            clf_params=clf_params_extra,
             reg_params=reg_params,
             reg_objective=reg_objective_name,
             reg_objective_kwargs={"alpha": args.alpha},
@@ -270,19 +284,22 @@ def main() -> int:
         p_v7_test = p_cal_test.copy()
     else:
         resid_corr = df_val_corr["target_qty"].to_numpy() - p_cal_val_corr
+        corrector_params = {
+            "objective": "regression_l1",
+            "num_leaves": 15,
+            "learning_rate": 0.05,
+            "feature_fraction": 0.7,
+            "bagging_fraction": 0.7,
+            "bagging_freq": 5,
+            "min_child_samples": 50,
+            "n_jobs": -1,
+            "verbose": -1,
+        }
+        if args.seed is not None:
+            corrector_params["seed"] = int(args.seed)
         corrector = SegmentResidualCorrector(
             feature_cols=feats,
-            lgb_params={
-                "objective": "regression_l1",
-                "num_leaves": 15,
-                "learning_rate": 0.05,
-                "feature_fraction": 0.7,
-                "bagging_fraction": 0.7,
-                "bagging_freq": 5,
-                "min_child_samples": 50,
-                "n_jobs": -1,
-                "verbose": -1,
-            },
+            lgb_params=corrector_params,
         ).fit(df_val_corr, resid_corr, n_rounds=args.residual_rounds)
         delta_val = corrector.predict(df_val)
         delta_val_meta = corrector.predict(df_val_meta)

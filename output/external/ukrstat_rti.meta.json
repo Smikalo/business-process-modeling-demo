@@ -1,0 +1,17 @@
+{
+  "source_name": "ukrstat_rti",
+  "fetch_timestamp": "2026-04-29T12:21:46+00:00",
+  "upstream_url": "https://ukrstat.gov.ua/operativ/operativ2024/sr/srt/srt_u/srt_u_2024.htm",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "9c8733cc240f1a12",
+  "signal_cols": [
+    "retail_trade_idx",
+    "retail_trade_idx_yoy_pct",
+    "retail_trade_food_idx",
+    "retail_trade_nonfood_idx"
+  ],
+  "publication_lag_days": 30,
+  "synthetic": true
+}

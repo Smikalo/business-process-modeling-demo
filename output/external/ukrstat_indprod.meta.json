@@ -1,0 +1,15 @@
+{
+  "source_name": "ukrstat_indprod",
+  "fetch_timestamp": "2026-04-29T12:21:46+00:00",
+  "upstream_url": "https://ukrstat.gov.ua/operativ/operativ2024/pr/pr_u/pr_u_2024.html",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "c53fc1c9b2b7e49d",
+  "signal_cols": [
+    "indprod_idx",
+    "indprod_idx_yoy_pct"
+  ],
+  "publication_lag_days": 30,
+  "synthetic": true
+}

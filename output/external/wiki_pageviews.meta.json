@@ -1,0 +1,16 @@
+{
+  "source_name": "wiki_pageviews",
+  "fetch_timestamp": "2026-04-29T12:22:17+00:00",
+  "upstream_url": "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "a6b18d48077e26cd",
+  "signal_cols": [
+    "wiki_pv_toys_total",
+    "wiki_pv_brands_total",
+    "wiki_pv_franchises_total",
+    "wiki_pv_yoy_pct"
+  ],
+  "publication_lag_days": 1
+}

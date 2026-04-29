@@ -1,0 +1,132 @@
+{
+  "checks": [
+    {
+      "name": "row_count_match",
+      "status": "PASS",
+      "detail": "V11 val=31368 test=18298 ; V12 val=31368 test=18298"
+    },
+    {
+      "name": "key_alignment",
+      "status": "PASS",
+      "detail": "val keys match=True, test keys match=True"
+    },
+    {
+      "name": "v12_test_simscore_beats_v11",
+      "status": "FAIL",
+      "detail": "V11=0.4489  V12=0.4607  Δ=+2.63%"
+    },
+    {
+      "name": "v12_test_wape_beats_v11",
+      "status": "WARN",
+      "detail": "V11=0.3950  V12=0.3983  Δ=+0.84%"
+    },
+    {
+      "name": "v12_test_bias_not_worse",
+      "status": "WARN",
+      "detail": "|V11 bias|=2.80%  |V12 bias|=4.48%  Δ=+1.68 pp"
+    },
+    {
+      "name": "overfit_gap_under_control",
+      "status": "PASS",
+      "detail": "V11 gap=+0.0914  V12 gap=+0.1093  growth=+0.0179"
+    },
+    {
+      "name": "no_test_month_with_extreme_bias",
+      "status": "WARN",
+      "detail": "2 test months with |bias%| > 10% (out of 7 total)"
+    },
+    {
+      "name": "ext_leakage_spot_check",
+      "status": "WARN",
+      "detail": "14 loaders with potentially recent data; feature-time guard handles actual leakage",
+      "violations": [
+        {
+          "loader": "blackout_dtek",
+          "date_max": "2027-12",
+          "lag_days": 7
+        },
+        {
+          "loader": "imf_cpi",
+          "date_max": "2027-12",
+          "lag_days": 30
+        },
+        {
+          "loader": "ukrstat_births",
+          "date_max": "2027-12",
+          "lag_days": 60
+        },
+        {
+          "loader": "ukrstat_indprod",
+          "date_max": "2027-12",
+          "lag_days": 30
+        },
+        {
+          "loader": "ukrstat_rti",
+          "date_max": "2027-12",
+          "lag_days": 30
+        },
+        {
+          "loader": "conflict_ua",
+          "date_max": "2027-12",
+          "lag_days": 30
+        },
+        {
+          "loader": "weather_ua",
+          "date_max": "2026-04",
+          "lag_days": 7
+        },
+        {
+          "loader": "airraid_oblast",
+          "date_max": "2027-12",
+          "lag_days": 1
+        },
+        {
+          "loader": "air_raids_ua",
+          "date_max": "2027-12",
+          "lag_days": 7
+        },
+        {
+          "loader": "world_bank_ua",
+          "date_max": "2027-12",
+          "lag_days": 365
+        },
+        {
+          "loader": "iom_idp",
+          "date_max": "2027-12",
+          "lag_days": 30
+        },
+        {
+          "loader": "gtrends_ua",
+          "date_max": "2027-12",
+          "lag_days": 14
+        },
+        {
+          "loader": "wiki_pageviews",
+          "date_max": "2027-12",
+          "lag_days": 1
+        },
+        {
+          "loader": "nbu_cci",
+          "date_max": "2027-12",
+          "lag_days": 7
+        }
+      ]
+    }
+  ],
+  "passed": 3,
+  "failed": 1,
+  "warnings": 4,
+  "scores": {
+    "v11_final_val_simscore": 0.3575,
+    "v11_final_test_simscore": 0.4489,
+    "v11_final_test_wape": 0.395,
+    "v11_final_test_bias_pct": 2.8,
+    "v12_final_val_simscore": 0.3514,
+    "v12_final_test_simscore": 0.4607,
+    "v12_final_test_wape": 0.3983,
+    "v12_final_test_bias_pct": 4.48,
+    "delta_test_simscore_pct": 2.63,
+    "delta_test_wape_pct": 0.84,
+    "delta_test_bias_abs_pct": 1.68
+  }
+}

@@ -1,0 +1,5 @@
+sbc_class,n_pairs,n_rows_val,wape_val,mean_target_qty,mean_prediction
+intermittent,799,9588,0.9986,1.0424,0.9957
+erratic,706,8472,0.7696,7.1654,7.375
+smooth,581,6972,0.4425,9.297,7.5031
+lumpy,528,6336,0.9171,2.0341,2.1718

@@ -1,0 +1,15 @@
+{
+  "source_name": "iom_idp",
+  "fetch_timestamp": "2026-04-29T12:21:48+00:00",
+  "upstream_url": "https://dtm.iom.int/ukraine (synthetic calibration \u2014 PDF parsing deferred to V12.1)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "99854a39a1cfda10",
+  "signal_cols": [
+    "idp_total_count",
+    "idp_returns_count_month",
+    "idp_western_oblasts_pct"
+  ],
+  "publication_lag_days": 30
+}

@@ -1,0 +1,16 @@
+{
+  "source_name": "ukrstat_births",
+  "fetch_timestamp": "2026-04-29T12:21:46+00:00",
+  "upstream_url": "https://ukrstat.gov.ua/operativ/operativ2024/ds/kn/kn_u/kn_u_2024.html",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "30962fc8e0f2c69d",
+  "signal_cols": [
+    "births_total",
+    "births_yoy_pct",
+    "births_per_1000"
+  ],
+  "publication_lag_days": 60,
+  "synthetic": true
+}

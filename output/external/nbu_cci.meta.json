@@ -1,0 +1,17 @@
+{
+  "source_name": "nbu_cci",
+  "fetch_timestamp": "2026-04-29T12:21:47+00:00",
+  "upstream_url": "https://bank.gov.ua/en/markets/forecasts",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "fbc871f69a0f7e88",
+  "signal_cols": [
+    "cci_overall",
+    "cci_present",
+    "cci_expectations",
+    "inflation_expectations_12m_pct"
+  ],
+  "publication_lag_days": 7,
+  "synthetic": true
+}

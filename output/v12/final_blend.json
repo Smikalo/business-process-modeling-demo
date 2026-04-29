@@ -1,0 +1,30 @@
+{
+  "champion_helper": "v11_g93",
+  "champion_lambda": 0.0,
+  "champion_OOF_recency": 0.4091,
+  "champion_OOF_bias_recency_pct": -0.866,
+  "champion_most_recent_fold_bias_pct": -1.466,
+  "champion_robust_objective": 0.4164,
+  "val_score": {
+    "n_rows": 31368,
+    "WAPE": 0.3321,
+    "MAE": 1.5713,
+    "RMSE": 3.6785,
+    "Bias_units": -0.0282,
+    "Agg_Bias_pct": -0.595,
+    "SMAPE_nz": 0.4168,
+    "Monthly_WAPE": 0.0327,
+    "SIMSCORE": 0.3514
+  },
+  "test_score": {
+    "n_rows": 18298,
+    "WAPE": 0.3983,
+    "MAE": 1.9619,
+    "RMSE": 4.8316,
+    "Bias_units": 0.2208,
+    "Agg_Bias_pct": 4.483,
+    "SMAPE_nz": 0.4946,
+    "Monthly_WAPE": 0.0801,
+    "SIMSCORE": 0.4607
+  }
+}

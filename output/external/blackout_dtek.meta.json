@@ -1,0 +1,15 @@
+{
+  "source_name": "blackout_dtek",
+  "fetch_timestamp": "2026-04-29T12:21:48+00:00",
+  "upstream_url": "https://dtek-kem.com.ua + https://ua.energy (synthetic \u2014 live scrape deferred to V12.1)",
+  "row_count": 108,
+  "date_range_min": "2019-01",
+  "date_range_max": "2027-12",
+  "schema_hash": "cef4a0ebf2353ae4",
+  "signal_cols": [
+    "blackout_avg_hours_per_day",
+    "blackout_pct_population_affected",
+    "blackout_severity_index"
+  ],
+  "publication_lag_days": 7
+}

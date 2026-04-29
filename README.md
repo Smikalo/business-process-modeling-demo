@@ -65,6 +65,10 @@ A planned campaign to push test SIMSCORE from `V11_final = 0.4447` toward `≤ 0
 
 Plans: `docs/v12_v14_extended_open_data.md` (Phase EXT detail), `scripts/setup_v12_v14_beads.py` (canonical ticket graph). Past chats live alongside the work.
 
+### V12 update (April 2026)
+
+The first V12 candidate has been built and audited. **It did not pass the acceptance gate** (test SIMSCORE 0.4607 vs `V11_final` 0.4489, +2.6 % regression) and **`V11_final` remains the production champion**. Diagnosis: a val→test bias-direction reversal — the new V12 bases (5-seed bagging + Croston/SBA/TSB intermittent specialist) reduced *validation* SIMSCORE by 1.7 % but flipped the OOF aggregate-bias direction, so the OOF-driven λ-blend search picked `λ = 0` (no defensive helper admixture). On the test window that defensive admixture was exactly what V11 needed; V12's pool didn't earn it. Full retro: [`docs/v12_retrospective.md`](docs/v12_retrospective.md). V12.1 fixes the bias-direction-symmetry constraint and re-trains the V11 base on `abt_v12_external` so the EXT features actually enter the model — estimated 1 week of CPU work. Infrastructure delivered in V12 (9 EXT loaders, multi-seed bagging, intermittent specialist, robust blend, V13/V14 GPU handoff package) is ready to use.
+
 ---
 
 ## Detailed Results (test set: Jul 2025 – Feb 2026, 34.2k active SKU-month pairs)

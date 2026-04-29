@@ -1,0 +1,5 @@
+bias_ceiling_pct,n_survivors,champion,champion_OOF_recency,champion_bias_pct,champion_gap
+1.0,26,v10+all_v12_tau0.52_ch08_chABC_brand,0.4121,-0.872,0.0361
+1.5,42,v10+all_v12_tau0.52_ch08_chABC_brand,0.4121,-0.872,0.0361
+2.0,66,v10+all_v12_tau0.52_ch08_chABC_brand,0.4121,-0.872,0.0361
+2.5,66,v10+all_v12_tau0.52_ch08_chABC_brand,0.4121,-0.872,0.0361
