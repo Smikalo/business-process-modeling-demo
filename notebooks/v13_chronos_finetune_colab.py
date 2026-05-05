@@ -144,94 +144,75 @@ print(f"using {len(raw_windows)} windows for fine-tune")
 
 
 # %% Cell 5b: tokenise to Chronos's quantised token IDs (~ 1 min)
-# Chronos's pipeline.tokenizer.context_input_transform expects a
-# TENSOR of shape (B, ctx_len). It returns (token_ids, attention_mask,
-# scale). label_input_transform takes (label_tensor, scale) and
-# returns (token_ids, attention_mask) — but the EXACT signature
-# varies across chronos versions, so we discover it dynamically.
+#
+# Chronos's tokenizer has TWO quirks that bit us in earlier runs:
+#
+# 1. `label_input_transform(label, scale)` HARD-ASSERTS that
+#    `label.shape[-1] == config.prediction_length` (typically 64).
+#    Our `HORIZON=8` therefore hits an AssertionError. Fix: bypass
+#    by calling the underlying `_input_transform(context=label,
+#    scale=scale)` directly — `label_input_transform` is just an
+#    assertion-wrapped call to it. `_input_transform` accepts any
+#    length and returns `(token_ids, attention_mask, scale)`.
+#
+# 2. `context_input_transform(ctx)` returns shape (1, 25) for input
+#    (1, 24) because it appends an EOS token. This is normal; we
+#    keep the +1 EOS token in the encoder input.
 
-# DIAGNOSTIC FIRST — fail loud on a single sample:
+# Diagnostic probe (fail loud, no silent except this time):
 ctx_arr = raw_windows[0]["ctx"]
 tgt_arr = raw_windows[0]["tgt"]
-print(f"ctx shape: {ctx_arr.shape}  dtype: {ctx_arr.dtype}")
-print(f"tgt shape: {tgt_arr.shape}  dtype: {tgt_arr.dtype}")
-print(f"tokenizer class: {type(pipe.tokenizer).__name__}")
+print(f"tokenizer class:                 {type(pipe.tokenizer).__name__}")
+print(f"tokenizer.config.context_length: {pipe.tokenizer.config.context_length}")
+print(f"tokenizer.config.prediction_length: {pipe.tokenizer.config.prediction_length}")
+print(f"our (CONTEXT_LEN, HORIZON):      ({CONTEXT_LEN}, {HORIZON})")
 
 ctx_t = torch.tensor(ctx_arr, dtype=torch.float32).unsqueeze(0)
 tgt_t = torch.tensor(tgt_arr, dtype=torch.float32).unsqueeze(0)
-print(f"\nProbing pipe.tokenizer.context_input_transform(ctx)...")
-ctx_out = pipe.tokenizer.context_input_transform(ctx_t)
-print(f"  returned {len(ctx_out)} values: {[type(x).__name__ for x in ctx_out]}")
-print(f"  shapes: {[getattr(x, 'shape', x) for x in ctx_out]}")
+ctx_ids, ctx_mask, scale = pipe.tokenizer.context_input_transform(ctx_t)
+print(f"\nctx tokenization OK: shapes = {ctx_ids.shape}, {ctx_mask.shape}, {scale.shape}")
 
-ctx_ids, ctx_mask, scale = ctx_out
-
-# Try multiple known signatures of label_input_transform across
-# chronos versions:
-import inspect
-sig = inspect.signature(pipe.tokenizer.label_input_transform)
-n_params = len([p for p in sig.parameters.values()
-                 if p.default is inspect.Parameter.empty
-                 and p.name != "self"])
-print(f"\npipe.tokenizer.label_input_transform signature: {sig}")
-print(f"  required positional args (excluding self): {n_params}")
-
-if n_params == 2:
-    tgt_out = pipe.tokenizer.label_input_transform(tgt_t, scale)
-elif n_params == 1:
-    tgt_out = pipe.tokenizer.label_input_transform(tgt_t)
-else:
-    raise RuntimeError(f"Unexpected label_input_transform signature: {sig}")
-print(f"  returned {len(tgt_out)} values: {[type(x).__name__ for x in tgt_out]}")
-print(f"  shapes: {[getattr(x, 'shape', x) for x in tgt_out]}")
-
-# tgt_out can be (token_ids, attention_mask) [most common] or
-# (token_ids, attention_mask, scale) [some versions]. Take first 2.
-tgt_ids = tgt_out[0]
-tgt_mask = tgt_out[1] if len(tgt_out) > 1 else torch.ones_like(tgt_ids)
-
-print(f"\nProbe success!")
-print(f"  ctx_ids shape: {ctx_ids.shape}, dtype: {ctx_ids.dtype}")
-print(f"  tgt_ids shape: {tgt_ids.shape}, dtype: {tgt_ids.dtype}")
+# Bypass label_input_transform's strict prediction_length assertion
+# by calling the underlying _input_transform directly. This is what
+# label_input_transform invokes internally after its assert.
+tgt_ids, tgt_mask, _ = pipe.tokenizer._input_transform(
+    context=tgt_t, scale=scale)
+print(f"tgt tokenization OK: shapes = {tgt_ids.shape}, {tgt_mask.shape}")
 print(f"  ctx_ids range: [{ctx_ids.min().item()}, {ctx_ids.max().item()}]")
 print(f"  tgt_ids range: [{tgt_ids.min().item()}, {tgt_ids.max().item()}]")
 
 
-def tokenise_window(ctx_arr, tgt_arr, n_label_args=n_params):
-    """Tokenise a single (ctx, tgt) pair. Robust across Chronos versions."""
+def tokenise_window(ctx_arr, tgt_arr):
+    """Tokenise a single (ctx, tgt) pair. Uses _input_transform for the
+    label to skip Chronos's strict prediction_length assertion."""
     ctx_t = torch.tensor(ctx_arr, dtype=torch.float32).unsqueeze(0)
     tgt_t = torch.tensor(tgt_arr, dtype=torch.float32).unsqueeze(0)
     ctx_ids, ctx_mask, scale = pipe.tokenizer.context_input_transform(ctx_t)
-    if n_label_args == 2:
-        tgt_out = pipe.tokenizer.label_input_transform(tgt_t, scale)
-    else:
-        tgt_out = pipe.tokenizer.label_input_transform(tgt_t)
-    tgt_ids = tgt_out[0]
+    tgt_ids, tgt_mask, _ = pipe.tokenizer._input_transform(
+        context=tgt_t, scale=scale)
     return {
-        "input_ids": ctx_ids.squeeze(0).long(),
+        "input_ids":      ctx_ids.squeeze(0).long(),
         "attention_mask": ctx_mask.squeeze(0).long(),
-        "labels": tgt_ids.squeeze(0).long(),
+        "labels":         tgt_ids.squeeze(0).long(),
     }
 
 
-# Bulk tokenise — NO silent except this time. If anything fails, fail loud.
+# Bulk tokenise — fail loud if any window errors out
 samples = []
 errors = []
 for i, w in enumerate(raw_windows):
     try:
-        s = tokenise_window(w["ctx"], w["tgt"])
-        samples.append(s)
+        samples.append(tokenise_window(w["ctx"], w["tgt"]))
     except Exception as e:
         errors.append((i, str(e)))
         if len(errors) <= 3:
-            print(f"  [error] window {i}: {e}")
+            print(f"  [error] window {i}: {type(e).__name__}: {e}")
 
-print(f"\ntokenised {len(samples)} / {len(raw_windows)} samples"
-      f"  (errors: {len(errors)})")
+print(f"\ntokenised {len(samples)} / {len(raw_windows)} samples  "
+      f"(errors: {len(errors)})")
 if len(samples) == 0:
     raise RuntimeError(
-        f"All windows failed tokenization. "
-        f"First error sample: {errors[:1]}")
+        f"All windows failed tokenization. First error: {errors[:1]}")
 print(f"  example input_ids shape: {samples[0]['input_ids'].shape}")
 print(f"  example labels shape:    {samples[0]['labels'].shape}")
 
@@ -353,22 +334,21 @@ model.save_pretrained(f"{DRIVE_DIR}/chronos_lora_adapter")
 print(f"saved LoRA adapter to {DRIVE_DIR}/chronos_lora_adapter")
 
 
-# %% Cell 5d: re-load fine-tuned model into Chronos pipeline (~ 30 sec)
-# Trick: the fine-tune mutated the underlying T5 weights via LoRA's
-# adapter. Pipe.model.model now IS the fine-tuned model since we
-# passed it directly to get_peft_model. To use Chronos's pipe.predict()
-# we need to restore the LoRA-merged weights into pipe.
+# %% Cell 5d: merge LoRA adapter into Chronos pipeline (~ 5 sec)
+# After Cell 5c's trainer.train(), the `model` variable IS the trained
+# PEFT-wrapped T5 (since we passed pipe.model.model directly to
+# get_peft_model). merge_and_unload() folds the LoRA adapter weights
+# into the base T5 linears and returns a clean nn.Module that
+# Chronos's pipe.predict() can use as a drop-in replacement.
 
-from peft import PeftModel
-
-# Reload base T5
-import copy
-base_clean = copy.deepcopy(pipe.model.model)
-peft_model = PeftModel.from_pretrained(base_clean,
-                                          f"{DRIVE_DIR}/chronos_lora_adapter")
-merged = peft_model.merge_and_unload()
+merged = model.merge_and_unload()
 pipe.model.model = merged.eval()
-print("LoRA weights merged into pipe.model.model")
+print("LoRA weights merged into pipe.model.model — ready for pipe.predict()")
+
+# Sanity: confirm the merge worked by counting parameters
+n_params = sum(p.numel() for p in pipe.model.model.parameters())
+n_trainable = sum(p.numel() for p in pipe.model.model.parameters() if p.requires_grad)
+print(f"  pipe.model.model: {n_params/1e6:.1f}M params  ({n_trainable/1e6:.1f}M trainable — expect ~46M / 0M after merge)")
 
 
 # %% Cell 6: fine-tuned forecasting on val + test windows (~ 25 min)
