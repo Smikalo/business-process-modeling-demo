@@ -20,23 +20,31 @@
 # ────────────────────────────────────────────────────────────────────────
 
 
-# %% Cell 1: install Chronos and pin transformers (~ 1 min)
+# %% Cell 1: install Chronos and pin compatible deps (~ 1 min)
 # IMPORTANT: chronos-forecasting==1.5.2 requires transformers<5,>=4.48 .
 # Colab Free ships transformers 5.x by default, which is INCOMPATIBLE.
-# Strategy: install Chronos which pulls in compatible transformers.
-# If you see transformers 5.x after install, DO Runtime → Restart session
-# and re-run only Cell 1.
+#
+# Also IMPORTANT: transformers 4.48+ uses Accelerator.unwrap_model's
+# keep_torch_compile kwarg, which was added in accelerate 1.0. Old
+# accelerate==0.34.x will fail Trainer.train() with TypeError. Pin
+# accelerate>=1.0.
+#
+# If after install the assertion below fails (transformers still 5.x),
+# DO Runtime → Restart session and re-run only Cell 1.
 
 # %pip install --quiet chronos-forecasting==1.5.2 "transformers>=4.48,<5" \
-#   accelerate==0.34.2 datasets==3.0.1 peft==0.13.2
+#   "accelerate>=1.0,<2" datasets==3.0.1 peft==0.13.2
 
-import torch, transformers
+import torch, transformers, accelerate
 print("torch", torch.__version__, "cuda", torch.cuda.is_available())
 print("transformers", transformers.__version__)
+print("accelerate", accelerate.__version__)
 print("GPU:", torch.cuda.get_device_name(0) if torch.cuda.is_available() else "NONE")
 assert torch.cuda.is_available(), "Switch runtime to T4 GPU first!"
 assert transformers.__version__.startswith(("4.4", "4.5")), \
     f"Need transformers 4.48-4.x, got {transformers.__version__} — restart session."
+assert accelerate.__version__.split(".")[0] in ("1", "2"), \
+    f"Need accelerate >= 1.0, got {accelerate.__version__} — re-run Cell 1 + restart."
 
 
 # %% Cell 2: mount Drive and locate the data (~ 5 sec)
