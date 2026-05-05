@@ -46,6 +46,15 @@ print(f"split sizes: {manifest['split_sizes']}")
 
 
 # %% Cell 3: load + split tensors (~ 1 min)
+#
+# CRITICAL: Robust scrubbing of NaN AND Inf. Earlier version only did
+# fillna(0) which doesn't catch +/-Inf values produced by upstream
+# feature-engineering division-by-zero (e.g., ratios like
+# tt_to_orc_ratio when stock=0). Inf in inputs → NaN in z-score
+# outputs → NaN loss → "epoch 1/15 train_pinball=nan" silently for
+# the entire run. The clamping below caps z-scores at ±10σ and
+# prevents NaN/Inf from ever entering the model.
+
 import pandas as pd
 import numpy as np
 
@@ -63,19 +72,30 @@ CAT_COLS = ["Партнер_idx", "Артикул_idx", "Бренд_idx", "Ка�
 DROP_COLS = ["Период_str", "target_qty"] + CAT_COLS
 
 NUMERIC_COLS = [c for c in train_df.columns if c not in DROP_COLS]
-# Exclude any leftover object-dtype columns (shouldn't be any after export)
 NUMERIC_COLS = [c for c in NUMERIC_COLS
                  if pd.api.types.is_numeric_dtype(train_df[c])]
 print(f"n_numeric features: {len(NUMERIC_COLS)}")
 
-# Impute missing numerics with 0 (most are lag-based and 0 is the
-# correct semantics for pre-history rows).
+# Robust scrub: replace BOTH NaN and Inf with sane finite values
 for df in (train_df, val_df, test_df):
-    df[NUMERIC_COLS] = df[NUMERIC_COLS].fillna(0).astype(np.float32)
+    arr = df[NUMERIC_COLS].values.astype(np.float32)
+    arr = np.nan_to_num(arr, nan=0.0, posinf=1e6, neginf=-1e6)
+    df[NUMERIC_COLS] = arr
 
-# z-score numeric cols using train stats
+# Drop rows with NaN/Inf in target_qty (they crash pinball loss)
+for split_name, df in [("train", train_df), ("val", val_df), ("test", test_df)]:
+    bad = df["target_qty"].isna() | np.isinf(df["target_qty"])
+    if bad.any():
+        print(f"  [scrub] {split_name}: dropped {bad.sum()} rows with NaN/Inf target")
+        df.drop(df.index[bad], inplace=True)
+
+# z-score stats from cleaned train, with NaN/Inf protection
 mu = train_df[NUMERIC_COLS].mean().values.astype(np.float32)
-sd = train_df[NUMERIC_COLS].std().replace(0, 1).values.astype(np.float32)
+sd = train_df[NUMERIC_COLS].std().fillna(1.0).replace(0, 1).values.astype(np.float32)
+mu = np.nan_to_num(mu, nan=0.0, posinf=0.0, neginf=0.0)
+sd = np.nan_to_num(sd, nan=1.0, posinf=1.0, neginf=1.0)
+print(f"  mu  range [{mu.min():.3g}, {mu.max():.3g}]  any-NaN={bool(np.isnan(mu).any())}")
+print(f"  sd  range [{sd.min():.3g}, {sd.max():.3g}]  any-NaN={bool(np.isnan(sd).any())}")
 
 
 def make_tensors(df):
@@ -84,6 +104,9 @@ def make_tensors(df):
     b = torch.tensor(df["Бренд_idx"].values,   dtype=torch.long)
     c = torch.tensor(df["Канал_idx"].values,   dtype=torch.long)
     n = (df[NUMERIC_COLS].values.astype(np.float32) - mu) / sd
+    # Paranoia: clip extreme z-scores AND scrub any residual NaN/Inf
+    n = np.nan_to_num(n, nan=0.0, posinf=10.0, neginf=-10.0)
+    n = np.clip(n, -10.0, 10.0)
     n = torch.tensor(n, dtype=torch.float32)
     y = torch.tensor(df["target_qty"].values.astype(np.float32),
                       dtype=torch.float32)
@@ -92,7 +115,15 @@ def make_tensors(df):
 train_tensors = make_tensors(train_df)
 val_tensors   = make_tensors(val_df)
 test_tensors  = make_tensors(test_df)
-print(f"train numeric tensor shape: {train_tensors[4].shape}")
+print(f"\ntrain numeric tensor shape: {train_tensors[4].shape}")
+# Final NaN/Inf gate — fail loud if anything got through
+for name, tens in [("train_numeric", train_tensors[4]),
+                    ("train_y",       train_tensors[5]),
+                    ("val_numeric",   val_tensors[4]),
+                    ("test_numeric",  test_tensors[4])]:
+    assert torch.isfinite(tens).all(), \
+        f"NaN/Inf still in {name}! min={tens.min().item()} max={tens.max().item()}"
+print(f"✓ all tensors finite (no NaN/Inf)")
 
 
 # %% Cell 4: paste in src/models/global_nn.py (architecture) (~ 5 sec)
@@ -197,6 +228,24 @@ sched = CosineAnnealingLR(opt, T_max=EPOCHS * len(train_loader))
 
 best_val_loss = float("inf")
 ckpt_path = f"{DRIVE_DIR}/v14_globalnn_best.pt"
+
+# Smoke test: 1-batch forward + backward pass. Fails LOUD if loss is
+# non-finite. Saves 2 hr of silent NaN training if data pipeline is
+# broken.
+model.train()
+smoke_batch = [t[:64].cuda() for t in train_tensors]
+sp, ss, sb, sc, sn, sy = smoke_batch
+opt.zero_grad()
+sm_pred = model(sp, ss, sb, sc, sn)
+sm_loss = pinball_loss(sm_pred, sy, cfg.quantiles)
+sm_loss.backward()
+print(f"smoke: pred shape={sm_pred.shape}  loss={sm_loss.item():.4f}  "
+      f"finite=pred:{torch.isfinite(sm_pred).all().item()},"
+      f"loss:{torch.isfinite(sm_loss).item()}")
+assert torch.isfinite(sm_loss).item(), \
+    f"Loss non-finite on smoke test ({sm_loss.item()}). Check NaN/Inf in inputs."
+opt.zero_grad()  # discard the smoke-test gradients
+print("✓ smoke test passed — starting training")
 
 for epoch in range(EPOCHS):
     model.train()
