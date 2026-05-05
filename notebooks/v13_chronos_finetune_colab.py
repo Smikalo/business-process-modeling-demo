@@ -146,43 +146,136 @@ print(f"using {len(raw_windows)} windows for fine-tune")
 # %% Cell 5b: tokenise to Chronos's quantised token IDs (~ 1 min)
 # Chronos's pipeline.tokenizer.context_input_transform expects a
 # TENSOR of shape (B, ctx_len). It returns (token_ids, attention_mask,
-# scale). For training we tokenise context AND future jointly so the
-# T5 model learns to predict the future quantile tokens given context
-# tokens.
-#
-# Returns: list of {input_ids: 1D tensor, labels: 1D tensor}.
+# scale). label_input_transform takes (label_tensor, scale) and
+# returns (token_ids, attention_mask) — but the EXACT signature
+# varies across chronos versions, so we discover it dynamically.
 
-def tokenise_window(ctx_arr, tgt_arr):
-    """Tokenise a single (ctx, tgt) pair. Returns dict with input_ids
-    (encoder input = ctx tokens) and labels (decoder target = tgt
-    tokens). The Chronos T5 is trained as encoder→decoder."""
-    ctx_t = torch.tensor(ctx_arr).unsqueeze(0)   # (1, ctx_len)
-    tgt_t = torch.tensor(tgt_arr).unsqueeze(0)   # (1, hor)
-    # Chronos's tokenizer scales each series by its abs-mean before
-    # quantising to 4096 token bins.
+# DIAGNOSTIC FIRST — fail loud on a single sample:
+ctx_arr = raw_windows[0]["ctx"]
+tgt_arr = raw_windows[0]["tgt"]
+print(f"ctx shape: {ctx_arr.shape}  dtype: {ctx_arr.dtype}")
+print(f"tgt shape: {tgt_arr.shape}  dtype: {tgt_arr.dtype}")
+print(f"tokenizer class: {type(pipe.tokenizer).__name__}")
+
+ctx_t = torch.tensor(ctx_arr, dtype=torch.float32).unsqueeze(0)
+tgt_t = torch.tensor(tgt_arr, dtype=torch.float32).unsqueeze(0)
+print(f"\nProbing pipe.tokenizer.context_input_transform(ctx)...")
+ctx_out = pipe.tokenizer.context_input_transform(ctx_t)
+print(f"  returned {len(ctx_out)} values: {[type(x).__name__ for x in ctx_out]}")
+print(f"  shapes: {[getattr(x, 'shape', x) for x in ctx_out]}")
+
+ctx_ids, ctx_mask, scale = ctx_out
+
+# Try multiple known signatures of label_input_transform across
+# chronos versions:
+import inspect
+sig = inspect.signature(pipe.tokenizer.label_input_transform)
+n_params = len([p for p in sig.parameters.values()
+                 if p.default is inspect.Parameter.empty
+                 and p.name != "self"])
+print(f"\npipe.tokenizer.label_input_transform signature: {sig}")
+print(f"  required positional args (excluding self): {n_params}")
+
+if n_params == 2:
+    tgt_out = pipe.tokenizer.label_input_transform(tgt_t, scale)
+elif n_params == 1:
+    tgt_out = pipe.tokenizer.label_input_transform(tgt_t)
+else:
+    raise RuntimeError(f"Unexpected label_input_transform signature: {sig}")
+print(f"  returned {len(tgt_out)} values: {[type(x).__name__ for x in tgt_out]}")
+print(f"  shapes: {[getattr(x, 'shape', x) for x in tgt_out]}")
+
+# tgt_out can be (token_ids, attention_mask) [most common] or
+# (token_ids, attention_mask, scale) [some versions]. Take first 2.
+tgt_ids = tgt_out[0]
+tgt_mask = tgt_out[1] if len(tgt_out) > 1 else torch.ones_like(tgt_ids)
+
+print(f"\nProbe success!")
+print(f"  ctx_ids shape: {ctx_ids.shape}, dtype: {ctx_ids.dtype}")
+print(f"  tgt_ids shape: {tgt_ids.shape}, dtype: {tgt_ids.dtype}")
+print(f"  ctx_ids range: [{ctx_ids.min().item()}, {ctx_ids.max().item()}]")
+print(f"  tgt_ids range: [{tgt_ids.min().item()}, {tgt_ids.max().item()}]")
+
+
+def tokenise_window(ctx_arr, tgt_arr, n_label_args=n_params):
+    """Tokenise a single (ctx, tgt) pair. Robust across Chronos versions."""
+    ctx_t = torch.tensor(ctx_arr, dtype=torch.float32).unsqueeze(0)
+    tgt_t = torch.tensor(tgt_arr, dtype=torch.float32).unsqueeze(0)
     ctx_ids, ctx_mask, scale = pipe.tokenizer.context_input_transform(ctx_t)
-    # For the decoder labels, transform tgt with the SAME scale so the
-    # decoder learns to predict tokens consistent with the context's scale.
-    tgt_ids, tgt_mask = pipe.tokenizer.label_input_transform(tgt_t, scale)
+    if n_label_args == 2:
+        tgt_out = pipe.tokenizer.label_input_transform(tgt_t, scale)
+    else:
+        tgt_out = pipe.tokenizer.label_input_transform(tgt_t)
+    tgt_ids = tgt_out[0]
     return {
         "input_ids": ctx_ids.squeeze(0).long(),
         "attention_mask": ctx_mask.squeeze(0).long(),
         "labels": tgt_ids.squeeze(0).long(),
     }
 
+
+# Bulk tokenise — NO silent except this time. If anything fails, fail loud.
 samples = []
-for w in raw_windows:
+errors = []
+for i, w in enumerate(raw_windows):
     try:
         s = tokenise_window(w["ctx"], w["tgt"])
         samples.append(s)
-    except Exception:
-        pass  # skip malformed
-print(f"tokenised {len(samples)} samples")
+    except Exception as e:
+        errors.append((i, str(e)))
+        if len(errors) <= 3:
+            print(f"  [error] window {i}: {e}")
+
+print(f"\ntokenised {len(samples)} / {len(raw_windows)} samples"
+      f"  (errors: {len(errors)})")
+if len(samples) == 0:
+    raise RuntimeError(
+        f"All windows failed tokenization. "
+        f"First error sample: {errors[:1]}")
 print(f"  example input_ids shape: {samples[0]['input_ids'].shape}")
 print(f"  example labels shape:    {samples[0]['labels'].shape}")
-print(f"  sanity: token range "
-      f"[{min(s['input_ids'].min().item() for s in samples[:100])}, "
-      f"{max(s['input_ids'].max().item() for s in samples[:100])}]")
+
+
+# %% Cell 5c-alt (FALLBACK): use Amazon's official Chronos training script
+# Use this ONLY if Cell 5c below fails. Battle-tested by the Chronos team —
+# handles Chronos-specific token shifting, decoder_input_ids, and EOS
+# masking that our hand-rolled Trainer doesn't. Run this INSTEAD of
+# Cell 5c, then skip to Cell 5d.
+#
+# Activation: comment out the `if False:` line below to enable.
+
+if False:  # noqa
+    # 1) clone the chronos-forecasting repo (~30 sec)
+    # !git clone --depth 1 https://github.com/amazon-science/chronos-forecasting.git /content/chronos-fc
+    # %cd /content/chronos-fc/scripts/training
+    # %pip install --quiet -e /content/chronos-fc
+
+    # 2) convert wide DFs to the arrow format train.py expects (~30 sec)
+    import datasets
+    rows = []
+    start_ts = pd.Period(train_months[0], freq="M").to_timestamp()
+    for pair, s in train_series.items():
+        rows.append({"start": start_ts.isoformat(),
+                      "target": s["target"].astype(float).tolist(),
+                      "item_id": str(pair)})
+    ds = datasets.Dataset.from_list(rows)
+    ds.to_parquet(f"{DRIVE_DIR}/train.arrow.parquet")
+    print(f"wrote {DRIVE_DIR}/train.arrow.parquet ({len(rows)} series)")
+
+    # 3) run the official trainer (~ 60-90 min on T4)
+    # !python train.py \
+    #     --config configs/chronos-t5-small.yaml \
+    #     --model-id amazon/chronos-t5-small \
+    #     --training-data-paths "[$DRIVE_DIR/train.arrow.parquet]" \
+    #     --probability "[1.0]" \
+    #     --max-steps 4000 \
+    #     --learning-rate 5e-5 \
+    #     --per-device-train-batch-size 16 \
+    #     --output-dir $DRIVE_DIR/chronos_lora_official
+
+    # 4) skip ahead to Cell 5d but pointed at chronos_lora_official
+    # The merge step works the same — just change the path in Cell 5d
+    # from chronos_lora_adapter to chronos_lora_official.
 
 
 # %% Cell 5c: wrap LoRA + HF Trainer + train (~ 60-90 min on T4)
