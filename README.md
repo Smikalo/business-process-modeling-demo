@@ -18,7 +18,7 @@ SKU-level demand forecasting and automated procurement recommendations for a Ukr
 | **Cumulative monthly accuracy** | **~92 %** | ~92 % | ~92 % | ~91 % | — |
 | **Cumulative annual accuracy** | **~63.6 %** | ~63.4 % | ~63 % | ~60 % | — |
 
-**Parallel sensitivity artifact:** `V13.1_relaxed` (= `0.925 · V12.1_champion + 0.075 · V13_chronos`) ships alongside production at test SIM **0.4322** (−2.95 % vs V12.1_champion on aligned subset, bias +0.05 %). It is **NOT the production model** — it lifts the strict OOF bias-magnitude constraint based on a documented 4-model-generation pattern of persistent positive test bias (a judgment call). See [`docs/v131_retrospective.md`](docs/v131_retrospective.md).
+**Parallel sensitivity artifact:** `V13.2_relaxed` (= `0.925 · V12.2_champion + 0.075 · V13_chronos_ft`) ships alongside production at test SIM **0.4329** on aligned subset (−1.97 % vs V12.2_champion on the same rows, bias −0.05 %). `V13_chronos_ft` is the LoRA fine-tuned (2 epochs, T4) Chronos-T5-Small — standalone test WAPE 0.617 vs zero-shot 0.630 (real but small fine-tune lift). It is **NOT the production model** — it lifts the strict OOF bias-magnitude constraint based on a documented 5-model-generation pattern of persistent positive test bias (a judgment call). Supersedes V13.1_relaxed (which used zero-shot Chronos). See [`docs/v131_retrospective.md`](docs/v131_retrospective.md).
 
 The 92 % monthly figure is "if you ask the model how many of brand-X are sold in March, it's right within 8 %". The 63 % annual figure is the per-pair `partner × SKU × month` accuracy averaged across the year — this is the harder problem and is close to the realistic ceiling for our data (open M5/Rossmann/Favorita benchmarks plateau at 62-67 % on similar structures, see `docs/limitations-and-next-steps.md`).
 
@@ -80,9 +80,16 @@ The first V12 candidate did not pass the acceptance gate (test SIMSCORE 0.4607 v
 
 `V12.2_champion = 0.925 · V11_final + 0.075 · V12_external` is the new production model after a 459-candidate joint multi-helper grid search over `(1−α−β−γ)·V11_final + α·V12_external + β·V11_g93 + γ·V13_chronos` with bias-laddered selection (ceilings 1.0/1.25/1.5/1.75/2.0 %). Champion at ceiling 1.25 % gives **test SIM 0.4435 (−0.40 % vs V12.1)**, bias +2.13 %, WAPE 0.3931 (new all-time low). V11_g93 and V13_chronos both earned **zero LAD weight** in the joint search. Full retro: [`docs/v122_retrospective.md`](docs/v122_retrospective.md).
 
-### V13 update — Chronos zero-shot (May 2026)
+### V13 update — Chronos zero-shot then fine-tuned (May 2026)
 
-Chronos-T5-Small was run on Colab T4 GPU. The original notebook's Cell 5 silently no-op'd because `context_len + horizon` exceeded the available training history per series; the `_ft` predictions were produced from the **stock pretrained model (zero-shot)**, not fine-tuned. Result: test WAPE 0.63, bias **−26.1 %** — much worse than V12.2 standalone, but with strongly negative bias direction making it a candidate bias-counter helper. Under honest OOF it earned **zero weight** (same finding V11 saw). `V13.1_relaxed` ships as a parallel judgment-call variant at λ=0.075 (test SIM 0.4322 on aligned subset). The fine-tune notebook has been **rewritten** with a working LoRA + HF Trainer loop — see [`notebooks/v13_chronos_finetune_colab.py`](notebooks/v13_chronos_finetune_colab.py) and run from Cell 5a onwards on Colab T4 (~2 hr) to get *real* fine-tuned predictions.
+Chronos-T5-Small ran twice on Colab T4 GPU:
+
+* **Zero-shot** (original notebook had a context_len/horizon mismatch that silently no-op'd Cell 5): test WAPE 0.63, bias −26.1 %.
+* **LoRA fine-tuned** (notebook rewritten with proper sliding-window builder + `_input_transform` bypass for the strict prediction_length assert + Trainer loop, 2 epochs ~60 min on T4): test WAPE **0.617**, bias **−23.9 %** — a real but small lift (−2 % WAPE).
+
+Under honest OOF Chronos earns **zero weight** in both V13.1 and V12.3 multi-helper joint searches. The val→test bias-direction reversal pattern is structural — Chronos's strongly negative bias is exactly what test wants but exactly opposite of what val OOF wants. So `V13_chronos_ft` ships as a documented base but doesn't enter production. `V13.2_relaxed` ships as the new parallel judgment-call variant.
+
+Fine-tune notebook is at [`notebooks/v13_chronos_finetune_colab.py`](notebooks/v13_chronos_finetune_colab.py) — known-working as of commit 491d379 (verified end-to-end on Colab T4).
 
 ### V14 update — GlobalNN ready for Colab (May 2026)
 

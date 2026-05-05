@@ -17,16 +17,18 @@ REPO = Path(__file__).resolve().parent.parent
 OUT = REPO / "output"
 
 MODELS = [
-    ("V10",                "v10_final",      "#999999"),
-    ("V11_LAD",            "v11_lad",        "#cc8866"),
-    ("V11_final",          "v11_final",      "#1f77b4"),
-    ("V12_LAD",            "v12_lad",        "#bbbbbb"),
-    ("V12_final",          "v12_final",      "#999999"),
-    ("V12.1_LAD",          "v121_lad",       "#ffaa55"),
-    ("V12.1_champion",     "v121_champion",  "#7fa8ff"),
-    ("V12.2_champion",     "v122_champion",  "#2ca02c"),
-    ("V13_chronos (zs)",   "v13_chronos",    "#888888"),
-    ("V13.1_relaxed",      "v131_relaxed",   "#9467bd"),
+    ("V10",                  "v10_final",         "#999999"),
+    ("V11_LAD",              "v11_lad",           "#cc8866"),
+    ("V11_final",            "v11_final",         "#1f77b4"),
+    ("V12_LAD",              "v12_lad",           "#bbbbbb"),
+    ("V12_final",            "v12_final",         "#999999"),
+    ("V12.1_LAD",            "v121_lad",          "#ffaa55"),
+    ("V12.1_champion",       "v121_champion",     "#7fa8ff"),
+    ("V12.2_champion",       "v122_champion",     "#2ca02c"),
+    ("V13_chronos (zs)",     "v13_chronos",       "#888888"),
+    ("V13_chronos_ft",       "v13_chronos_ft",    "#888888"),
+    ("V13.1_relaxed",        "v131_relaxed",      "#cab8e0"),
+    ("V13.2_relaxed",        "v132_relaxed",      "#9467bd"),
 ]
 
 
@@ -77,16 +79,24 @@ def main() -> int:
     md += ["",
            "## Notes",
            "",
-           "* **V12.2_champion** is the new production model "
+           "* **V12.2_champion** is the production model "
            "(`0.925·V11_final + 0.075·V12_external`, OOF-honest). "
-           "Test SIM 0.4435, bias +2.13 %, WAPE 0.3931 (new all-time low).",
-           "* **V13.1_relaxed** is a parallel sensitivity artifact "
-           "(`0.925·V12.1_champion + 0.075·Chronos`, judgment-call). "
-           "Test SIM 0.4322 on aligned subset, bias +0.05 %. "
-           "**Not OOF-defensible** — see `docs/v131_retrospective.md`.",
-           "* **V13_chronos** is the zero-shot Chronos-T5-Small run "
-           "(LoRA fine-tune silently no-op'd; predictions are stock "
-           "pretrained model). Earned 0 LAD weight under honest OOF.",
+           "Test SIM 0.4435, bias +2.13 %, WAPE 0.3931.",
+           "* **V13.2_relaxed** is the latest parallel sensitivity artifact "
+           "(`0.925·V12.2_champion + 0.075·V13_chronos_ft`, judgment-call). "
+           "Test SIM 0.4329 on aligned subset (95.7 % coverage of V12.2), "
+           "bias −0.05 %. Supersedes V13.1_relaxed.",
+           "* **V13_chronos_ft** is the LoRA fine-tuned Chronos-T5-Small "
+           "(2 epochs, ~600K trainable params, ran on Colab T4). "
+           "Standalone test WAPE 0.617 (vs zero-shot 0.630, −2.1 % lift). "
+           "Earned 0 LAD weight in V12.3 multi-helper joint OOF search "
+           "(same val→test bias-direction reversal that affected zero-shot).",
+           "* **V13_chronos (zs)** is the original zero-shot Chronos run "
+           "(LoRA fine-tune in Cell 5 silently no-op'd due to context_len "
+           "vs prediction_length mismatch — kept for historical reference).",
+           "* **V12.3 multi-helper joint search** (with FT Chronos in the pool) "
+           "produced the same champion as V12.2 — 0 weight on Chronos in any "
+           "OOF-defensible variant.",
            ""]
     (OUT / "full_audit.md").write_text("\n".join(md))
 

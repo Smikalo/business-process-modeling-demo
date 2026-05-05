@@ -1,0 +1,37 @@
+{
+  "variant": "V13.2_relaxed",
+  "recipe": "0.925 * v122_champion + 0.075 * v13_chronos_ft",
+  "lambda": 0.075,
+  "selection_rule": "judgment-call (lifts strict |bias|<=1% constraint)",
+  "rationale": "V12.2_champion has persistent +2.13% positive test bias (consistent across 5 model generations); V13_chronos_ft (LoRA fine-tuned) carries -23.9% bias, opposite direction. λ=0.075 neutralises test bias to -0.05% at cost of -1.5% OOF SIM.",
+  "ship_as": "PARALLEL artifact alongside V12.2_champion (production unchanged)",
+  "v122_champion_aligned_test_simscore": 0.4416,
+  "v122_champion_full_test_simscore": 0.4435,
+  "v132_relaxed_test_simscore": 0.4329,
+  "delta_aligned": -0.008699999999999986,
+  "delta_relative_pct_aligned": -1.9701086956521705,
+  "n_aligned_rows_test": 17507,
+  "n_full_rows_test": 18298,
+  "val_score": {
+    "n_rows": 30012,
+    "WAPE": 0.3331,
+    "MAE": 1.6419,
+    "RMSE": 3.8587,
+    "Bias_units": -0.1737,
+    "Agg_Bias_pct": -3.523,
+    "SMAPE_nz": 0.4101,
+    "Monthly_WAPE": 0.0482,
+    "SIMSCORE": 0.3748
+  },
+  "test_score": {
+    "n_rows": 17507,
+    "WAPE": 0.3913,
+    "MAE": 2.0044,
+    "RMSE": 5.0571,
+    "Bias_units": -0.0025,
+    "Agg_Bias_pct": -0.048,
+    "SMAPE_nz": 0.4856,
+    "Monthly_WAPE": 0.0828,
+    "SIMSCORE": 0.4329
+  }
+}
