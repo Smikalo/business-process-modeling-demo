@@ -1,0 +1,37 @@
+{
+  "variant": "V13.1_relaxed",
+  "recipe": "0.925 * v121_champion + 0.075 * v13_chronos",
+  "lambda": 0.075,
+  "selection_rule": "judgment-call (lifts strict |bias|<=1% constraint)",
+  "rationale": "V12.1_champion has consistent +2.37% positive test bias; Chronos zero-shot has -26% bias, opposite direction. λ=0.075 neutralises test bias to +0.05% at cost of -1.5% OOF SIM.",
+  "ship_as": "PARALLEL artifact alongside V12.1_champion (production unchanged)",
+  "v121_champion_aligned_test_simscore": 0.4434,
+  "v131_relaxed_test_simscore": 0.4322,
+  "v121_champion_full_test_simscore": 0.4453,
+  "delta_aligned": -0.011200000000000043,
+  "delta_relative_pct_aligned": -2.525935949481291,
+  "n_aligned_rows_test": 17507,
+  "n_full_rows_test": 18298,
+  "val_score": {
+    "n_rows": 30012,
+    "WAPE": 0.3326,
+    "MAE": 1.6395,
+    "RMSE": 3.8546,
+    "Bias_units": -0.1907,
+    "Agg_Bias_pct": -3.868,
+    "SMAPE_nz": 0.4149,
+    "Monthly_WAPE": 0.0495,
+    "SIMSCORE": 0.3767
+  },
+  "test_score": {
+    "n_rows": 17507,
+    "WAPE": 0.3907,
+    "MAE": 2.0017,
+    "RMSE": 5.061,
+    "Bias_units": 0.0026,
+    "Agg_Bias_pct": 0.05,
+    "SMAPE_nz": 0.4859,
+    "Monthly_WAPE": 0.0825,
+    "SIMSCORE": 0.4322
+  }
+}

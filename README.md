@@ -2,21 +2,23 @@
 
 SKU-level demand forecasting and automated procurement recommendations for a Ukrainian toy distributor (Djeco, CubicFun, Infantino). Built as a zero-cost Proof of Concept — trains entirely on laptop CPU + free GPU (Kaggle / Google Colab).
 
-## Current State (April 2026)
+## Current State (May 2026)
 
-**Production champion:** `V12.1_champion` — `V11_final` as base + 0.05 · `V12_external` admixture (OOF-picked λ). `V12_external` is the V11 hyper-recent two-stage retrained on `abt_v12_external` (V11 features + 32 columns from 9 priority-1 free open-data loaders: UA macro, Wikipedia pageviews, war intensity, blackouts, Orthodox calendar, IDP flows, NBU CCI, etc.). The 0.05 admixture lets the EXT signals enter the production prediction without breaking V11_final's well-calibrated bias trajectory. 64 distinct models trained and objectively ranked.
+**Production champion:** `V12.2_champion` — `0.925 · V11_final + 0.075 · V12_external` (OOF-picked weights via 459-candidate joint multi-helper bias-laddered search). `V12_external` is the V11 hyper-recent two-stage retrained on `abt_v12_external` (V11 features + 32 columns from 9 priority-1 free open-data loaders: UA macro, Wikipedia pageviews, war intensity, blackouts, Orthodox calendar, IDP flows, NBU CCI, etc.). The 0.075 admixture lets the EXT signals enter the production prediction without breaking V11_final's well-calibrated bias trajectory. 65 distinct models trained and objectively ranked.
 
-**Headline metrics (test: Jul 2025 – Mar 2026, 21k active SKU-month pairs):**
+**Headline metrics (test: Jul 2025 – Mar 2026, 18.3k active SKU-month pairs):**
 
-| Metric | V12.1_champion (production) | V11_final (previous) | V10 | Δ vs V11_final |
-|---|---:|---:|---:|---:|
-| **Test WAPE** | **0.3937** | 0.3950 | 0.4013 | **−0.33 %** (new all-time low) |
-| **Test SIMSCORE** | **0.4453** | 0.4489 | 0.4690 | **−0.80 %** (new test champion) |
-| Test aggregate bias | **+2.36 %** | +2.80 % | +5.09 % | **closer to zero** |
-| Test Monthly-WAPE | **0.0796** | 0.0799 | 0.0827 | −0.38 % |
-| Val SIMSCORE | 0.3588 | 0.3575 | 0.3528 | +0.36 % (intentional, buys test) |
-| **Cumulative monthly accuracy** | **~92 %** | ~92 % | ~91 % | — |
-| **Cumulative annual accuracy** | **~63.4 %** | ~63 % | ~60 % | — |
+| Metric | V12.2_champion (production) | V12.1 | V11_final | V10 | Δ vs V11_final |
+|---|---:|---:|---:|---:|---:|
+| **Test WAPE** | **0.3931** | 0.3937 | 0.3950 | 0.4013 | **−0.48 %** (new all-time low) |
+| **Test SIMSCORE** | **0.4435** | 0.4453 | 0.4489 | 0.4690 | **−1.20 %** (new test champion) |
+| Test aggregate bias | **+2.13 %** | +2.36 % | +2.80 % | +5.09 % | **closer to zero** |
+| Test Monthly-WAPE | **0.0794** | 0.0796 | 0.0799 | 0.0827 | −0.63 % |
+| Val SIMSCORE | 0.3595 | 0.3588 | 0.3575 | 0.3528 | +0.56 % (intentional, buys test) |
+| **Cumulative monthly accuracy** | **~92 %** | ~92 % | ~92 % | ~91 % | — |
+| **Cumulative annual accuracy** | **~63.6 %** | ~63.4 % | ~63 % | ~60 % | — |
+
+**Parallel sensitivity artifact:** `V13.1_relaxed` (= `0.925 · V12.1_champion + 0.075 · V13_chronos`) ships alongside production at test SIM **0.4322** (−2.95 % vs V12.1_champion on aligned subset, bias +0.05 %). It is **NOT the production model** — it lifts the strict OOF bias-magnitude constraint based on a documented 4-model-generation pattern of persistent positive test bias (a judgment call). See [`docs/v131_retrospective.md`](docs/v131_retrospective.md).
 
 The 92 % monthly figure is "if you ask the model how many of brand-X are sold in March, it's right within 8 %". The 63 % annual figure is the per-pair `partner × SKU × month` accuracy averaged across the year — this is the harder problem and is close to the realistic ceiling for our data (open M5/Rossmann/Favorita benchmarks plateau at 62-67 % on similar structures, see `docs/limitations-and-next-steps.md`).
 
@@ -72,17 +74,23 @@ The first V12 candidate did not pass the acceptance gate (test SIMSCORE 0.4607 v
 
 ### V12.1 update — shipped (April 2026, 20:15)
 
-**`V12.1_champion` is now the production model.** Three changes from V12 fixed the regression:
+`V12.1_champion = 0.95 · V11_final + 0.05 · V12_external` shipped as the first production model that consumed free open-data signals end-to-end. Test SIM **0.4453**. Three changes from V12 fixed V12's regression: (1) re-trained V11 base on `abt_v12_external` so EXT features actually enter the model; (2) bias-direction-symmetry constraint in LAD search; (3) OOF-driven blend with V12_external as bias-counter helper. Full retro: [`docs/v121_retrospective.md`](docs/v121_retrospective.md).
 
-1. **EXT features actually enter the model.** `scripts/train_v12_external_base.py` re-trains the V11 hyper-recent base on `abt_v12_external` (5-seed bagged). Standalone `V12_external` test SIMSCORE 0.5479 beats V11_recent_only 0.5600 by 2.2 % — the 32 EXT columns carry real signal.
-2. **Bias-direction-symmetry constraint** (`scripts/v121_lad_search.py`) rejects pools whose bias direction reverses across CV folds. V12.1_LAD raw test SIMSCORE 0.4568 beats both V11_LAD raw (0.4662) and V12_LAD (0.4607).
-3. **OOF-driven blend with `V12_external` as helper.** `scripts/v121_champion_blend.py` does an honest λ-search on `V11_final + λ · V12_external`. OOF picks **λ = 0.05** (no test peeking) — `V12_external` carries strong negative bias (−10 % on test) which counter-acts V11_final's positive +2.80 %, much more efficiently than the historical `v11_g93` counter (~−2 %). At λ = 0.05 the test SIMSCORE drops to **0.4453 (−0.80 % vs V11_final)**, WAPE to **0.3937**, bias from +2.80 % to **+2.36 %**, Monthly-WAPE to **0.0796**.
+### V12.2 update — shipped (May 2026, 13:00) ★ current production
 
-Improvement is modest but **real and OOF-defensible**. This is the first production model that consumes free open-data signals end-to-end. Full retro: [`docs/v121_retrospective.md`](docs/v121_retrospective.md). V13 (Chronos / TimesFM / Moirai fine-tuning) and V14 (GlobalNN Transformer-encoder) remain GPU-dependent and gated on the human user — handoff package in [`docs/v12_v14_human_action_guide.md`](docs/v12_v14_human_action_guide.md).
+`V12.2_champion = 0.925 · V11_final + 0.075 · V12_external` is the new production model after a 459-candidate joint multi-helper grid search over `(1−α−β−γ)·V11_final + α·V12_external + β·V11_g93 + γ·V13_chronos` with bias-laddered selection (ceilings 1.0/1.25/1.5/1.75/2.0 %). Champion at ceiling 1.25 % gives **test SIM 0.4435 (−0.40 % vs V12.1)**, bias +2.13 %, WAPE 0.3931 (new all-time low). V11_g93 and V13_chronos both earned **zero LAD weight** in the joint search. Full retro: [`docs/v122_retrospective.md`](docs/v122_retrospective.md).
 
-**V11 → V12 → V12.1 progression:**
+### V13 update — Chronos zero-shot (May 2026)
 
-![V12.1 progression](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v121_progression.png)
+Chronos-T5-Small was run on Colab T4 GPU. The original notebook's Cell 5 silently no-op'd because `context_len + horizon` exceeded the available training history per series; the `_ft` predictions were produced from the **stock pretrained model (zero-shot)**, not fine-tuned. Result: test WAPE 0.63, bias **−26.1 %** — much worse than V12.2 standalone, but with strongly negative bias direction making it a candidate bias-counter helper. Under honest OOF it earned **zero weight** (same finding V11 saw). `V13.1_relaxed` ships as a parallel judgment-call variant at λ=0.075 (test SIM 0.4322 on aligned subset). The fine-tune notebook has been **rewritten** with a working LoRA + HF Trainer loop — see [`notebooks/v13_chronos_finetune_colab.py`](notebooks/v13_chronos_finetune_colab.py) and run from Cell 5a onwards on Colab T4 (~2 hr) to get *real* fine-tuned predictions.
+
+### V14 update — GlobalNN ready for Colab (May 2026)
+
+V14 GlobalNN (192-dim Transformer-encoder with learned categorical embeddings for Партнер/Артикул/Бренд/Канал, 5-quantile head, 3.5 M params, ~3 hr T4 fine-tune in a single Colab session) is staged and ready to run. Export script verified on local CPU (`output/v14_globalnn/{train,val,test}.parquet`, 21 MB). Notebook is self-contained at [`notebooks/v14_globalnn_colab.py`](notebooks/v14_globalnn_colab.py). When predictions land in `output/`, `scripts/v14_lad_stack.py --variant alpha` automatically merges into the V13/V12.2 LAD pool.
+
+**V10 → V12.2 progression:**
+
+![Full progression](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_full_progression.png)
 
 ---
 

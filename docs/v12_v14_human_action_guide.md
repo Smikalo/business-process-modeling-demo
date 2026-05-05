@@ -49,7 +49,7 @@ convenient. The handoff package below is unchanged.
 | **V13** | **TimesFM fine-tune (Colab GPU)** | 👤 **YOU DO** — see Step 2 below |
 | **V13** | **Moirai fine-tune (Kaggle GPU)** | 👤 **YOU DO** — see Step 3 below |
 | V13 | LAD merge of fine-tuned FMs | ⏳ runnable: `python -m scripts.v13_lad_stack` after the 3 GPU runs |
-| **V14** | **GlobalNN training (Colab GPU, 4 sessions)** | 👤 **YOU DO** — see Step 4 below |
+| **V14** | **GlobalNN training (Colab GPU, 1 session ~3 hr)** | 👤 **YOU DO** — see Step 4 below; notebooks/v14_globalnn_colab.py is now self-contained |
 | V14 | LAD merge with GlobalNN | ⏳ runnable: `python -m scripts.v14_lad_stack` |
 | V14 | MoE per-cluster specialists | ⏳ CPU; runnable after V14_alpha |
 | V14 | final V14 LAD + viz + executive report | ⏳ runnable |
@@ -60,7 +60,21 @@ already gives a measurable improvement over V11 even without V13/V14.
 
 ---
 
-## Step 1 — Fine-tune Chronos-T5-Small on Colab Free (≈ 5 hr GPU)
+## Step 1 — Fine-tune Chronos-T5-Small on Colab Free (≈ 2 hr GPU)
+
+**Status as of 2026-05-05:** zero-shot Chronos was tested (Cell 5
+silently no-op'd because `context_len=48 + horizon=12 = 60` exceeded
+the 54-month training history; 0 fine-tune samples were prepared).
+Result: zero-shot test WAPE 0.63, bias −26.1 % — much worse than
+V12.1_champion 0.394. Chronos earned 0 weight under honest OOF (same
+as V11). V13.1_relaxed shipped as parallel artifact.
+
+The notebook has been rewritten with `context_len=24, horizon=8`
+(fits in 54-month history with 22 sliding windows per series) and a
+proper HF Trainer loop. **Re-run from Cell 5a onwards with the latest
+notebook to get genuinely fine-tuned predictions.** Save the new
+predictions as `preds_v13_chronos_ft_{val,test}.csv` (the `_ft`
+suffix distinguishes them from the failed zero-shot run).
 
 ### 1a. Prepare the data export (you, locally — 5 min)
 
@@ -96,24 +110,43 @@ If "GPU not available right now": wait 5–10 min and retry. Free tier is
 first-come-first-served. If Colab refuses GPU for >1 hr, switch to
 Step 1d (Kaggle).
 
-### 1d. Run cells 1–7 in order (you — 5 hr, mostly idle)
+### 1d. Run cells 1 → 5d → 6 → 7 → 8 in order (you — 2 hr, mostly idle)
 
-Each cell prints expected output. Active time is ≈ 10 min total — the
-rest is GPU waiting. You can close the laptop lid; Colab Free
-disconnects only after 90 min of *no browser tab open*. Just leave the
-tab open in the background.
+The notebook is now structured as:
+* Cells 1–4: setup (~3 min)
+* **Cell 5a**: build sliding windows (24+8 monthly windows, ~30 sec)
+* **Cell 5b**: tokenise to Chronos quantised IDs (~1 min)
+* **Cell 5c**: LoRA + HF Trainer fine-tune (**~ 60–90 min on T4**, this is the bulk of the wall-clock)
+* **Cell 5d**: re-load fine-tuned weights into the Chronos pipeline (~30 sec)
+* Cell 6: forecast val + test windows (~25 min)
+* Cells 7–8: write CSVs + sanity print (~1 min)
+
+Active human time is ≈ 10 min total — the rest is GPU waiting. You
+can close the laptop lid; Colab Free disconnects only after 90 min
+of *no browser tab open*. Just leave the tab open in the background.
+
+**Sanity checks during the run:**
+* Cell 5a should print `built ~50000+ sliding windows from 2599 series`.
+* Cell 5b should print `tokenised ~30000 samples` (after MAX_SAMPLES cap).
+* Cell 5c should print `trainable params: ~600,000 || all params: ~46M`
+  and a *decreasing* `train_loss` value every 50 steps (e.g. 6.8 → 5.2 → 4.5).
+* Cell 5d should print `LoRA weights merged into pipe.model.model`.
+* Cell 8 should show `test WAPE 0.50-0.55`. If it shows ~0.63 (the
+  zero-shot value), the fine-tune didn't take — most likely cause is
+  that you skipped Cell 5d or `trainer.train()` errored silently.
 
 ### 1e. Download the result CSVs (you — 2 min)
 
-The notebook writes `preds_v13_chronos_val.csv` + `preds_v13_chronos_test.csv`
-to `/MyDrive/v13_fm_data/`. Download to your local repo:
+The notebook writes `preds_v13_chronos_ft_val.csv` + `preds_v13_chronos_ft_test.csv`
+to `/MyDrive/v13_fm_data/` (note the `_ft` suffix vs the zero-shot run).
+Download to your local repo:
 
 ```bash
 cd /Users/m.kozyrev/Desktop/business-process-modeling-demo
 # either via gdrive CLI:
 gdrive download --recursive --path output v13_fm_data
 # or just drag-drop in the Drive web UI to ~/Downloads/, then:
-mv ~/Downloads/preds_v13_chronos_*.csv output/
+mv ~/Downloads/preds_v13_chronos_ft_*.csv output/
 ```
 
 ### 1f. Quick sanity check (you — 30 sec)
@@ -122,15 +155,24 @@ mv ~/Downloads/preds_v13_chronos_*.csv output/
 PYTHONPATH=. python -c "
 from scripts.score_similarity import score_frame
 import pandas as pd
-v = pd.read_csv('output/preds_v13_chronos_val.csv')
-t = pd.read_csv('output/preds_v13_chronos_test.csv')
+v = pd.read_csv('output/preds_v13_chronos_ft_val.csv')
+t = pd.read_csv('output/preds_v13_chronos_ft_test.csv')
 print('val:', score_frame(v))
 print('test:', score_frame(t))
 "
 ```
 
-Fine-tuned Chronos test SIMSCORE should be in the **0.50–0.65** range.
-If it's > 0.85 something went wrong (zero-shot baseline was 0.88).
+Fine-tuned Chronos test SIMSCORE should be in the **0.55–0.70** range
+(test WAPE 0.50–0.55). The zero-shot baseline was test SIMSCORE 0.87
+(WAPE 0.63). If you see ~0.87 again, the fine-tune didn't take —
+re-check Cell 5c's training loss trace and Cell 5d's merge step.
+
+After the predictions land in `output/`, run the V13 LAD merge against
+V12.1_champion:
+
+```bash
+PYTHONPATH=. python -m scripts.v131_champion_blend  # if you used the _ft suffix, edit the script's `helper = "v13_chronos_ft"`
+```
 
 ---
 
@@ -202,12 +244,19 @@ fine-tune didn't generalise; revisit the per-FM hyperparameters.
 
 ---
 
-## Step 5 — Train the GlobalNN (V14_alpha, Colab Free, ≈ 16 hr GPU split)
+## Step 5 — Train the GlobalNN (V14_alpha, Colab Free, ≈ 3 hr GPU)
 
-GlobalNN is a Transformer-encoder model with learned embeddings for
-`Партнер`, `Артикул`, `Бренд`, `Канал`. It produces direct quantile
-forecasts for h=1..6 and is the only V14 component that benefits from
-GPU. Architecture: see `src/models/global_nn.py`.
+**Notebook is self-contained** — no GitHub clone needed. Paste-and-run
+from `notebooks/v14_globalnn_colab.py`. **One Colab session is
+sufficient** (15 epochs over 231 k rows fits in ~2 h on T4 with
+batch=1024); checkpointing is to Drive after each epoch's best val
+loss, so disconnects are recoverable.
+
+GlobalNN is a 192-dim Transformer-encoder with learned embeddings for
+`Партнер`, `Артикул`, `Бренд`, `Канал`. Produces 5-quantile
+forecasts (q0.1, q0.25, q0.5, q0.75, q0.9). Architecture lives in
+`src/models/global_nn.py` and is also inlined in Cell 4 of the
+notebook for self-containment.
 
 ### 5a. Prepare data + notebook (you — 5 min)
 
@@ -215,39 +264,38 @@ GPU. Architecture: see `src/models/global_nn.py`.
 PYTHONPATH=. python -m scripts.export_v14_globalnn_data
 ```
 
-Writes `output/v14_globalnn/{train,val,test}.parquet` to your repo.
-Upload all three to Google Drive at `/MyDrive/v14_globalnn_data/`.
+Writes `output/v14_globalnn/{train,val,test}.parquet` (231k / 51k / 34k
+rows) plus `vocab.json` and `manifest.json` (already verified to build
+end-to-end on local CPU; ~21 MB total).
 
-Push the notebook:
+Upload **all five files** to Google Drive at `/MyDrive/v14_globalnn_data/`.
 
-```bash
-git add notebooks/v14_globalnn_colab.ipynb && git commit -m "v14 globalnn notebook" && git push
-```
+### 5b. Run cells 1 → 7 in Colab (you — 3 hr, mostly idle)
 
-### 5b. Train across 4 Colab sessions (you — 4× 4 hr)
+* Cells 1–3: setup + load tensors (~3 min)
+* Cell 4: build model (~5 sec; should report ≈ 3.5 M params)
+* **Cell 5: train 15 epochs** (~ 90–120 min on T4; logs train/val
+  pinball loss per epoch with ★ marking best-so-far)
+* Cell 6: inference (~ 5 min)
+* Cells 7–8: sanity print + download instructions
 
-The model is too big to train in a single Colab Free session (12 h
-hard cap, 90 min idle disconnect). The notebook checkpoints every
-500 steps to Drive, so each session resumes where the last left off.
+**Sanity checks during the run:**
+* Cell 4 should print `GlobalNN: 3.5M params`.
+* Cell 5 should show **train_pinball decreasing** (e.g. epoch 1 = 0.85,
+  epoch 5 = 0.55, epoch 15 = 0.42) and **val_pinball plateau or
+  improve** by epoch 5–10.
+* Cell 7 expected: **val WAPE 0.32–0.36, test WAPE 0.38–0.42**. If val
+  WAPE > 0.45, training didn't converge — try LR=2e-4 + 25 epochs.
 
-Open the same Colab notebook 4 times across 4 days; each run resumes,
-trains for 4 hours, then hits the soft idle limit. After session 4,
-the model has seen ≈ 32 k optimizer steps which is enough on this
-data size.
-
-### 5c. Run inference + download (you — 30 min)
-
-In session 4 (or session 5 if needed), run the inference cell after
-training completes. The notebook writes `preds_v14_globalnn_{val,test}.csv`
-to Drive. Download to `output/`.
-
-### 5d. Merge into LAD pool (CPU, 2 min)
+### 5c. Download + LAD merge (you — 5 min)
 
 ```bash
+mv ~/Downloads/preds_v14_globalnn_*.csv output/
 PYTHONPATH=. python -m scripts.v14_lad_stack --variant alpha
 ```
 
-V14_alpha test SIMSCORE goal: ≤ 0.425.
+V14_alpha test SIMSCORE goal: ≤ 0.420 (a ≥ 0.5 % improvement over
+V12.2's 0.4435 would justify shipping V14_alpha as new champion).
 
 ---
 

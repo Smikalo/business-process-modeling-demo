@@ -1,0 +1,35 @@
+{
+  "champion_helper": "v13_chronos",
+  "champion_lambda": 0.0,
+  "champion_OOF_recency": 0.4104,
+  "champion_OOF_bias_recency_pct": -1.084,
+  "v121_champion_aligned_test_simscore": 0.4434,
+  "v121_champion_full_test_simscore": 0.4453,
+  "v131_aligned_test_simscore": 0.4434,
+  "delta_test_simscore_aligned": 0.0,
+  "delta_relative_pct_aligned": 0.0,
+  "n_aligned_rows_test": 17507,
+  "n_full_rows_test": 18298,
+  "val_score": {
+    "n_rows": 30012,
+    "WAPE": 0.3294,
+    "MAE": 1.6236,
+    "RMSE": 3.767,
+    "Bias_units": -0.0845,
+    "Agg_Bias_pct": -1.715,
+    "SMAPE_nz": 0.4126,
+    "Monthly_WAPE": 0.0393,
+    "SIMSCORE": 0.3576
+  },
+  "test_score": {
+    "n_rows": 17507,
+    "WAPE": 0.3918,
+    "MAE": 2.0071,
+    "RMSE": 4.9592,
+    "Bias_units": 0.1213,
+    "Agg_Bias_pct": 2.368,
+    "SMAPE_nz": 0.4887,
+    "Monthly_WAPE": 0.0795,
+    "SIMSCORE": 0.4434
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "champion_recipe": "(0.925)·V11_final + (0.075)·V12_external + (0.000)·V11_g93 + (0.000)·V13_chronos",
+  "weights": [
+    0.925,
+    0.075,
+    0.0,
+    0.0
+  ],
+  "OOF_recency": 0.41034,
+  "OOF_bias_recency_pct": -1.2107999999999999,
+  "bias_ceiling_used": 1.25,
+  "val_score": {
+    "n_rows": 30012,
+    "WAPE": 0.3291,
+    "MAE": 1.6224,
+    "RMSE": 3.7694,
+    "Bias_units": -0.0915,
+    "Agg_Bias_pct": -1.857,
+    "SMAPE_nz": 0.4124,
+    "Monthly_WAPE": 0.0397,
+    "SIMSCORE": 0.3583
+  },
+  "test_score": {
+    "n_rows": 17507,
+    "WAPE": 0.3912,
+    "MAE": 2.004,
+    "RMSE": 4.9639,
+    "Bias_units": 0.11,
+    "Agg_Bias_pct": 2.147,
+    "SMAPE_nz": 0.4883,
+    "Monthly_WAPE": 0.0794,
+    "SIMSCORE": 0.4416
+  },
+  "v121_champion_aligned_test_simscore": 0.4434,
+  "v121_champion_full_test_simscore": 0.4453,
+  "delta_test_simscore_aligned": -0.0018000000000000238,
+  "delta_relative_pct_aligned": -0.4059539918809255
+}
