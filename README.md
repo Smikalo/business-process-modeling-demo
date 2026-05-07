@@ -201,19 +201,3 @@ What would unlock 80-90 % accuracy (out of scope for current zero-budget work; 1
 * **2-3 additional pre-pandemic years** of history for a clean seasonal anchor — +1-2 p.p.
 
 See [`docs/guides/limitations-and-next-steps.md`](docs/guides/limitations-and-next-steps.md) for the full analysis.
-
----
-
-## Compute & cost
-
-| Stage | Time | Cost |
-|---|---|---|
-| Data ingest + ABT build (V12 era, ~316 k × 223 cols) | ~3 min (cached) | $0 |
-| V12_external base training (5 seeds) | ~5 min CPU | $0 |
-| V12.2 multi-helper joint OOF search (459 candidates) | ~5 min CPU | $0 |
-| Business demo package generation | ~5 sec | $0 |
-| V13 Chronos fine-tune | ~2 hr Colab T4 | $0 |
-| V14 GlobalNN training | ~3 hr Kaggle T4/P100 | $0 |
-| **Total — full pipeline reproduction** | **~3 hr wall-clock** | **$0** |
-
-Free Kaggle CLI tooling (`scripts/v14_kaggle_check.sh`, `scripts/build_v14_kaggle_notebook.py`, `scripts/push_to_kaggle.sh`) reads `KAGGLE_USERNAME` + `KAGGLE_API_TOKEN` from `.env`. No browser clicks for GPU runs.
