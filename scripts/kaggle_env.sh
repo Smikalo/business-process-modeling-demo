@@ -12,15 +12,29 @@
 # entirely free on the standard account.  There is no paid tier to opt into.
 
 _repo_root() {
-  local dir
-  dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  # Works in BOTH bash and zsh: bash uses BASH_SOURCE, zsh uses $0
+  # (when sourcing via `source` or `.`).
+  local src dir
+  if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+    src="${BASH_SOURCE[0]}"
+  else
+    src="$0"
+  fi
+  dir="$(cd "$(dirname "$src")/.." && pwd)"
   printf '%s' "$dir"
 }
 
 _load_dotenv() {
-  local envfile="$(_repo_root)/.env"
+  # Fallback: if _repo_root mis-resolved (e.g. zsh quirks with $0
+  # when sourced from non-script context), try $PWD/.env first.
+  local envfile
+  if [[ -f "$PWD/.env" ]]; then
+    envfile="$PWD/.env"
+  else
+    envfile="$(_repo_root)/.env"
+  fi
   if [[ ! -f "$envfile" ]]; then
-    echo "kaggle_env: no .env at $envfile" >&2
+    echo "kaggle_env: no .env at $envfile (try cd to repo root first)" >&2
     return 1
   fi
   set -a

@@ -1,0 +1,14 @@
+{
+  "id": "mykhailokozyrev/bpm-v14-globalnn",
+  "title": "BPM V14 GlobalNN",
+  "code_file": "v14_globalnn.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_tpu": "false",
+  "enable_internet": "false",
+  "dataset_sources": ["mykhailokozyrev/bpm-v14-globalnn-data"],
+  "competition_sources": [],
+  "kernel_sources": []
+}
