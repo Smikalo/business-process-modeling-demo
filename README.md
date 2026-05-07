@@ -49,9 +49,9 @@ A management-facing presentation package (`output/business_demo_pkg/`) with 3 pa
 
 ![Full progression](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_full_progression.png)
 
-**V11 quality showcase — production model deep-dive (full 19-month timeline + per-channel violins + calibration scatter + rolling MAE/WAPE)**
+**V12.2_champion quality showcase — production model deep-dive (full 19-month timeline + per-brand residual violins + calibration scatter + per-month test WAPE + headline metrics table)**
 
-![V11 quality showcase](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v11_quality_showcase.png)
+![V12.2 quality showcase](https://raw.githubusercontent.com/Smikalo/business-process-modeling-demo/main/output/plot_v122_quality_showcase.png)
 
 **Why we are at the DATA ceiling, not the algorithm ceiling — four independent lines of evidence**
 
