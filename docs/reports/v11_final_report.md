@@ -32,7 +32,7 @@ component fitted before knowing what the test set looks like.
 ## Three V11 variants compared
 
 After Chronos-T5-Small was integrated via the Colab notebook
-(see `docs/v11_chronos_colab_guide.md`), three blend variants were
+(see `docs/guides/v11_chronos_colab_guide.md`), three blend variants were
 evaluated to expose the OOF-vs-test trade-off transparently.  All
 three blend the same three components — V11_LAD (base), V11_g93
 (steep-recency LightGBM), V11_chronos (zero-shot foundation model) —
@@ -235,7 +235,7 @@ catastrophically too low).
 ### Priority 5 — Chronos foundation model on Colab (NOTEBOOK READY)
 
 Notebook: `notebooks/v11_chronos_colab.ipynb`
-Step-by-step guide: `docs/v11_chronos_colab_guide.md`
+Step-by-step guide: `docs/guides/v11_chronos_colab_guide.md`
 
 Why on Colab and not Kaggle: V10 attempted Chronos twice on Kaggle and
 both kernels crashed with `torchvision::nms does not exist`. Colab Free's
@@ -303,7 +303,7 @@ for tag in v11_recent_only v11_g93 v11_g90; do
   done
 done
 
-# (optional) Chronos on Colab — see docs/v11_chronos_colab_guide.md
+# (optional) Chronos on Colab — see docs/guides/v11_chronos_colab_guide.md
 
 # V11 LAD search + λ-blend
 PYTHONPATH=. python -m scripts.v11_lad_stack

@@ -55,4 +55,4 @@ Re-run Optuna with **UAH cost** as the objective (not pinball loss), using
 the per-SKU margin table and the official scorecard. That is the only way
 to recover a tuning win on the business metric.
 
-See also: `docs/v71_final_report.md`, `docs/adr-006-v71.md`.
+See also: `docs/reports/v71_final_report.md`, `docs/adr/adr-006-v71.md`.

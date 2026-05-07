@@ -222,7 +222,7 @@ Two backup options:
    [modal.com](https://modal.com), they give $30/month free credits which is
    enough for ~10 Chronos runs. The notebook would need to be wrapped in
    a `modal.App` script (~30 lines of additional code, see
-   `docs/v11_plan.md` Priority 5 for the template).
+   `docs/guides/v11_plan.md` Priority 5 for the template).
 
 2. **HuggingFace Spaces (ZeroGPU)**: free A100 minutes. The notebook
    would need to be ported to a Gradio app first — non-trivial, ~1 day

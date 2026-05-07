@@ -7,7 +7,7 @@ relative**). Bias improved from +2.80 % → +2.36 %, WAPE 0.3950 → 0.3937,
 Monthly-WAPE 0.0799 → 0.0796. **V12.1_champion is the new production
 model.**
 
-This document complements `docs/v12_retrospective.md` which explained
+This document complements `docs/retrospectives/v12_retrospective.md` which explained
 why the V12 attempt regressed. V12.1 fixed the regression by addressing
 each diagnosed cause.
 
@@ -105,7 +105,7 @@ is small in absolute terms but it is:
   macro, war intensity, etc.) actually contribute to the production
   model's predictions
 
-The data ceiling (see `docs/limitations-and-next-steps.md`) still
+The data ceiling (see `docs/guides/limitations-and-next-steps.md`) still
 applies: this run brought us from ~63 % yearly cumulative to
 **~63.4 %** by absorbing what EXT signals can offer at λ = 0.05. To
 go meaningfully higher we still need (a) granular partner sell-out,

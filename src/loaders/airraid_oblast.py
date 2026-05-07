@@ -4,8 +4,7 @@ Companion / refinement of :mod:`src.loaders.air_raids_ua` (national curated
 hours).  This loader targets the public ``api.alerts.in.ua`` endpoints which
 expose oblast-level alarm metadata; we aggregate from oblast-day to
 nation-month so the result joins on ``Период`` alone (we do not yet have a
-partner→oblast mapping, that comes with V12.1 — see
-``docs/v12_v14_extended_open_data.md`` row ``EXT_AIRRAID_OBLAST``).
+partner→oblast mapping, deferred to a future V12.x iteration).
 
 Feature hypothesis: alarm hours are correlated with foot-traffic disruption,
 but the *oblast spread* of the alarms (how many oblasts simultaneously

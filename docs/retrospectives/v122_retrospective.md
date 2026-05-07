@@ -76,7 +76,7 @@ and V12.2.
 * **V13_chronos** (zero-shot): test bias −26 %. Adding it to the blend
   drives OOF bias too negative too fast (−4 % at λ = 0.05). The OOF
   surface is monotone-increasing in λ_chronos under any reasonable
-  bias ceiling. See `docs/v131_retrospective.md` for the test-window
+  bias ceiling. See `docs/retrospectives/v131_retrospective.md` for the test-window
   diagnostic showing λ ≈ 0.075 *would* work on test.
 * **V11_g93**: test bias −2 %, similar direction to V12_external but
   ~5× weaker. The joint search shows V11_g93's bias signal is

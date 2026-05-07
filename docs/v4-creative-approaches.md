@@ -136,7 +136,7 @@ To achieve *drastic* improvements, the problem formulation itself needs to chang
 
 ## Production Recommendation
 
-Use `run_v4_final.py` → `output/model_v4_ensemble.joblib`:
+Use `pipelines/run_v4_final.py` → `output/model_v4_ensemble.joblib`:
 
 - **Training:** V3 two-stage (~30 s) + LogTarget two-stage (~50 s) + PerChannel 4× two-stage (~80 s) = **~3 min total** on a laptop CPU
 - **Inference:** instant (4 booster predictions + weighted sum)

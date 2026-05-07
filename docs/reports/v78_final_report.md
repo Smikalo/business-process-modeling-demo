@@ -147,7 +147,7 @@ This means:
 4. **Decision-cost re-tuning** (separate track).  The V7.8 SIMSCORE
    champion is *not* the UAH-cost-optimal point.  A separate champion
    tuned for inventory cost would use τ < 0.5 (under-forecast on
-   purpose) and a different LAD pool.  See `docs/v72_final_report.md`
+   purpose) and a different LAD pool.  See `docs/reports/v72_final_report.md`
    for the cost vs accuracy trade-off.
 
 ## Reproducibility

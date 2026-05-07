@@ -53,7 +53,7 @@ The ensemble leverages these non-overlapping strengths; individually each is sli
 
 ### Shipped
 - `src/model_v4.py` contains production components
-- `run_v4_final.py` is the canonical training entrypoint
+- `pipelines/run_v4_final.py` is the canonical training entrypoint
 - `output/model_v4_ensemble.joblib` contains all three LightGBM models + frozen weights + feature column list — single deployable artifact
 
 ### Not shipped (explored, archived)

@@ -1,7 +1,7 @@
 # V6 — Executive report
 
 Demand-forecasting model, iteration 6.  One-page business summary; full
-engineering detail lives in `docs/adr-004-v6.md`.
+engineering detail lives in `docs/adr/adr-004-v6.md`.
 
 ---
 
@@ -14,7 +14,7 @@ engineering detail lives in `docs/adr-004-v6.md`.
 | New features | 6 external-signal families (kept from V5) | + 7 **promo-lifecycle features** (duration, depth, time-to-next / time-since-last, post-promo depletion, SKU sensitivity) + `was_censored` flag |
 | Validation | single 2024-07 ... 2025-06 window | **rolling-origin CV across the last 6 months** (mean + 0.5σ as selection score) |
 | Evaluation | WAPE / MAPE_nz / RMSE | + **UAH cost scorecard** (holding vs lost-margin split per model) |
-| Compute | local CPU | **free-GPU workflow** (Kaggle + Colab templates, `scripts/push_to_kaggle.sh`, `docs/gpu-workflow.md`) |
+| Compute | local CPU | **free-GPU workflow** (Kaggle + Colab templates, `scripts/push_to_kaggle.sh`, `docs/guides/gpu-workflow.md`) |
 
 ## 2. Headline numbers
 
@@ -96,4 +96,4 @@ Individual stand-alone charts suitable for decks:
 * Metrics: `output/v{5,6}_metrics.csv`, `output/v{5,6}_rolling_cv.{json,md}`
 * Cost scorecard: `output/cost_scorecard.{md,json}`
 * Feature importance: `output/feature_importance_v6.csv`
-* ADR: `docs/adr-004-v6.md`
+* ADR: `docs/adr/adr-004-v6.md`

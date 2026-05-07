@@ -67,4 +67,4 @@ None of these are expected to be needed for the PoC.
 
 ## Scope update (V4)
 
-The original decision (V1-V3) assumed a single LightGBM model family. V4 extends this to an **ensemble of LightGBM models** (V3 Tweedie + LogTarget MAE + PerChannel specialists). This does not change the zero-cost / CPU-only premise — all three components are LightGBM boosters; they train serially on the same hardware with total runtime still well under 5 min. See `docs/adr-002-ensemble-architecture.md` for the ensemble rationale.
+The original decision (V1-V3) assumed a single LightGBM model family. V4 extends this to an **ensemble of LightGBM models** (V3 Tweedie + LogTarget MAE + PerChannel specialists). This does not change the zero-cost / CPU-only premise — all three components are LightGBM boosters; they train serially on the same hardware with total runtime still well under 5 min. See `docs/adr/adr-002-ensemble-architecture.md` for the ensemble rationale.

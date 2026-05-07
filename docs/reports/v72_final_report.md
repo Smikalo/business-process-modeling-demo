@@ -186,8 +186,8 @@ Concretely where the next 10–20K UAH could come from:
 
 ## See also
 
-- `docs/v71_final_report.md` — V7.1 release (recency weights +
+- `docs/reports/v71_final_report.md` — V7.1 release (recency weights +
   per-channel specialists)
 - `docs/v71_optuna_comparison.md` — why Optuna on pinball loss did NOT
   help (and V7.2 fixed that by switching to UAH cost)
-- `docs/adr-006-v71.md` — V7.1 ADR
+- `docs/adr/adr-006-v71.md` — V7.1 ADR

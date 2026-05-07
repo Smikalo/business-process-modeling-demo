@@ -5,7 +5,7 @@ Identical to ``scripts.train_v12_multiseed`` but trains on
 to the V12 external ABT, which carries the V11 features + 32 EXT
 columns from the priority-1 open-data loaders).
 
-This is V12.1 step 1 from ``docs/v12_retrospective.md``: it lets the
+This is V12.1 step 1 from ``docs/retrospectives/v12_retrospective.md``: it lets the
 EXT signals actually enter the model (V12's LAD search couldn't see
 them because LAD operates on prediction CSVs, not features).
 

@@ -124,4 +124,4 @@ combination does.
   test WAPE, test bias, val→test scatter)
 * `output/plot_all_models_timeline.png` — per-month total demand,
   top-8 OOF-safe models
-* `docs/v11_final_report.md` — full V11 narrative with variants table
+* `docs/reports/v11_final_report.md` — full V11 narrative with variants table

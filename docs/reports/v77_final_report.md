@@ -86,8 +86,7 @@ Notebook: `notebooks/v76_symmetric_retrain.ipynb` →
 Trained five symmetric-objective V7 variants (Tweedie 1.3/1.5, MAE,
 Huber, L2) on the existing V7 feature set.  Standalone test
 SIMSCOREs: 0.49–0.63.  Adding them to the LAD pool *improved* CV by
-0.7 % but *hurt* test by 0.5 % — rejected as overfit.  The full
-analysis lives in `docs/v76_symmetric_retrain_report.md`.
+0.7 % but *hurt* test by 0.5 % — rejected as overfit.
 
 ### B. Decorrelated bases on Kaggle GPU (kept v77_recent)
 

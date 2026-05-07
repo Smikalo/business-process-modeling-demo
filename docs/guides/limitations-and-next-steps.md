@@ -43,7 +43,7 @@
 - Комиссионер partners' demand ≈ retail sales quantity (commission-based; shipment reflects inventory movement, not demand).
 - Forward-filling RRP prices is reasonable between price change events.
 - Safety-stock formula using q90−q50 spread is appropriate for this demand profile.
-- Two months of validation is sufficient for weight selection of a 4-component convex ensemble (validated empirically — see `docs/adr-002`).
+- Two months of validation is sufficient for weight selection of a 4-component convex ensemble (validated empirically — see `docs/adr/adr-002`).
 
 ## Recommended Next Steps
 

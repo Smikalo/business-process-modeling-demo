@@ -51,7 +51,7 @@ def load_baseline_abt() -> pd.DataFrame:
         df = pd.read_parquet(ABT_CACHE)
         return encode_categoricals(df)
     raise FileNotFoundError(
-        f"{ABT_CACHE} not found. Run `python run_v4_final.py` first to cache it."
+        f"{ABT_CACHE} not found. Run `python pipelines/run_v4_final.py` first to cache it."
     )
 
 

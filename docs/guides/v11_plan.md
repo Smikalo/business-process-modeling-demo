@@ -287,7 +287,7 @@ scripts/push_v11_colab.sh            — Colab kernel push
 notebooks/v11_chronos_colab.ipynb    — Colab Chronos notebook
 scripts/loaders/gtrends_ua_v2.py     — multi-source Google Trends loader
 scripts/loaders/olx_listings.py      — OLX listings scraper
-docs/v11_final_report.md
+docs/reports/v11_final_report.md
 ```
 
 End of V11 plan.

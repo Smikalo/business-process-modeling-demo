@@ -24,7 +24,7 @@
 | LightGBM monotone (stockout only) | `v7_mono_stockout` | 5.0M | dropped |
 | Iterative EM imputation (1 round on top of rec97) | `v7_rec_em` | 1.416M (WAPE best, cost worse) | dropped |
 
-See `docs/adr-006-v71.md` for technical reasoning on each decision.
+See `docs/adr/adr-006-v71.md` for technical reasoning on each decision.
 
 ## Business impact
 
@@ -118,7 +118,7 @@ have a promo-forward feature for Q4.
 - `output/plot_v71_recency_sweep.png` — γ sweep.
 - `output/plot_v71_channel_blend.png` — blend-weight sweep.
 - `output/plot_v71_stability.png` — per-month WAPE.
-- `docs/adr-006-v71.md` — Architectural Decision Record.
+- `docs/adr/adr-006-v71.md` — Architectural Decision Record.
 
 ## How to reproduce
 
