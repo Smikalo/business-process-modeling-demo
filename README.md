@@ -91,9 +91,39 @@ Under honest OOF Chronos earns **zero weight** in both V13.1 and V12.3 multi-hel
 
 Fine-tune notebook is at [`notebooks/v13_chronos_finetune_colab.py`](notebooks/v13_chronos_finetune_colab.py) — known-working as of commit 491d379 (verified end-to-end on Colab T4).
 
-### V14 update — GlobalNN ready for Colab (May 2026)
+### V14 update — GlobalNN trained on Kaggle, leakage caught (May 2026)
 
-V14 GlobalNN (192-dim Transformer-encoder with learned categorical embeddings for Партнер/Артикул/Бренд/Канал, 5-quantile head, 3.5 M params, ~3 hr T4 fine-tune in a single Colab session) is staged and ready to run. Export script verified on local CPU (`output/v14_globalnn/{train,val,test}.parquet`, 21 MB). Notebook is self-contained at [`notebooks/v14_globalnn_colab.py`](notebooks/v14_globalnn_colab.py). When predictions land in `output/`, `scripts/v14_lad_stack.py --variant alpha` automatically merges into the V13/V12.2 LAD pool.
+**V14 trained successfully** on Kaggle P100/T4 via the new CLI-driven pipeline (uses `KAGGLE_API_TOKEN` from `.env`). After 6 kernel iterations to fix P100 sm_60 incompatibility, in-process torch reload bug, and private-dataset nested mount path, training completed on the full V12-external feature space.
+
+**Caught a data-leakage bug:** the first run produced too-good results (test SIM 0.1377, +69 % vs V11_final). Investigation showed `Количество_sales` (current-month sales quantity) had **+1.0000 correlation** with the target — the export script grabbed all numeric columns except literal `target_qty` but missed the canonical leakage exclusion list in `src.model_v2.get_feature_columns_v2`. After fixing the export to exclude 11 current-month columns, **honest V14 standalone test SIM = 0.5213 (worse than V12.2's 0.4435)** and V14 earns 0.075 LAD weight in V12.6 joint search but the resulting blend is **0.07 % worse on test**. Production stays V12.2_champion. Full retro: [`docs/v14_retrospective.md`](docs/v14_retrospective.md).
+
+**Kaggle pipeline shipped** (now reproducible end-to-end in ~30 min from CLI):
+* `scripts/build_v14_kaggle_notebook.py` — auto-builds the .ipynb from a paste-script
+* `scripts/v14_kaggle_check.sh status|log|pull|merge` — one-command helper
+* `output/v14_kaggle_kernel/v14_globalnn.ipynb` — kernel with auto-detect P100→torch 2.5.1 install + recursive dataset path discovery
+* `output/v14_kaggle_dataset/` — uploaded dataset (clean, no leakage)
+
+### Anna business package — for management presentation (May 2026)
+
+Built a complete management-facing package per Anna's request (see conversation in chat history):
+
+* `output/anna_v122_pkg/panel1_fact_vs_forecast.png` (RU) + `_EN.png` — per-brand monthly Fact vs AI Forecast, with expert plan overlay (extracted from the 2026 Заказники for Infantino + Cubic Fun)
+* `output/anna_v122_pkg/panel2_business_value.png` (RU) + `_EN.png` — UAH freed by AI vs expert baseline (holding 22 %/yr + lost margin 14 %)
+* `output/anna_v122_pkg/panel3_seasonality_stress.png` (RU) + `_EN.png` — Sep'25 → Jan'26 stress test with shaded over/under-forecast zones
+* `output/anna_v122_pkg/exec_summary.png` (RU) + `_EN.png` — 1-page executive summary
+* `output/anna_v122_pkg/Заказник_AI_прогноз.xlsx` (RU) + `Forecast_V12_2_AI.xlsx` (EN) — Excel in Anna's exact Заказник layout (brand-level + top-15 SKUs × 7 months × Fact/Forecast/Deviation, color-coded)
+* `output/anna_v122_pkg/README.md` (RU) + `README_EN.md` — explainer with key numbers
+
+**Key business numbers** (test window Jul 2025 – Jan 2026, 7 months held-out):
+
+| Бренд / Brand | Факт / Actual | Прогноз AI / AI Forecast | Откл / Error |
+|---|---:|---:|---:|
+| Infantino | 11.46 M UAH | 11.81 M UAH | +3.0 % |
+| Cubic Fun | 8.43 M UAH | 8.30 M UAH | −1.6 % |
+| Djeco | 11.59 M UAH | 11.57 M UAH | −0.2 % |
+| **ИТОГО / TOTAL** | **31.49 M UAH** | **31.69 M UAH** | **+0.6 %** |
+
+Annual aggregate error 0.6 %, monthly accuracy 92 %, per-pair accuracy ~63 % (at M5/Rossmann global ceiling).
 
 **V10 → V12.2 progression:**
 
