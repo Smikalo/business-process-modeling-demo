@@ -22,3 +22,24 @@ venv/
 output/gpu/
 
 logs/
+
+# Confidential customer-supplied data (do not commit)
+data/Заказ*.xlsx
+data/Заказник*.xlsx
+data/Копия*.xlsx
+data/Анализ*.xlsx
+data/джеко*.xlsx
+data/заказ*.xlsx
+data/КопияАнализ*.xlsx
+data/message*/
+data/переговоры*
+
+# OS / editor cruft
+.DS_Store
+
+# Cursor and tooling state
+.cursor/
+.beads/
+
+# Local zip drops at the repo root
+*_pkg.zip

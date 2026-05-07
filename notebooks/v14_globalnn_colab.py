@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────
 # V14 GlobalNN — Transformer-encoder fine-tune (Google Colab Free, T4 GPU)
-# Total time: ~3-4 hours wall-clock. Active human time: ~10 minutes.
+# Total time: ~3-4 hours wall-clock; ~10 minutes of interactive time.
 #
 # Trains a 192-dim Transformer-encoder with learned categorical
 # embeddings (Партнер / Артикул / Бренд / Канал) on the V12-external

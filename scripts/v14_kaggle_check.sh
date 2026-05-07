@@ -19,7 +19,13 @@ set -a
 . ./.env
 set +a
 
-KERNEL="mykhailokozyrev/bpm-v14-globalnn"
+KAGGLE_USER="${KAGGLE_USERNAME:-${KAGGLE_USER:-}}"
+if [[ -z "$KAGGLE_USER" ]]; then
+  echo "Set KAGGLE_USERNAME in your environment (or .env), e.g.:"
+  echo "  export KAGGLE_USERNAME=your-handle"
+  exit 1
+fi
+KERNEL="${KAGGLE_USER}/bpm-v14-globalnn"
 OUT="output/v14_kaggle_output"
 
 cmd="${1:-status}"

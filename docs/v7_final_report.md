@@ -130,7 +130,7 @@ python -m scripts.viz_model_progression
 
 - **Optuna P100 retune** is queued on Kaggle
   (`notebooks/v7_optuna.ipynb`, slug
-  `mykhailokozyrev/bpm-v7-optuna`). The resulting
+  `<kaggle-user>/bpm-v7-optuna`). The resulting
   `v7_optuna_best_params.json` can be merged via
   `--optuna-params …` in `scripts/train_v7.py`.
 - Monthly per-SKU margin time series — would let V7 adapt to wartime

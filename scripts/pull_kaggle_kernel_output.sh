@@ -6,7 +6,7 @@
 #
 # Usage:
 #   bash scripts/pull_kaggle_kernel_output.sh
-#   bash scripts/pull_kaggle_kernel_output.sh --slug mykhailokozyrev/bpm-v6-train
+#   bash scripts/pull_kaggle_kernel_output.sh --slug <kaggle-user>/bpm-v6-train
 #   bash scripts/pull_kaggle_kernel_output.sh --timeout 3600   # seconds
 
 set -euo pipefail

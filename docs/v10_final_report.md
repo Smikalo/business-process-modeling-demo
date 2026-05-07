@@ -89,8 +89,8 @@ V10 LAD is the test-WAPE and val-SIMSCORE champion.
 ### Big Bet 2 — Foundation-model TRIPLET (Chronos / TimesFM / Lag-Llama) ⚠
 * Wrote: `notebooks/v10_chronos_kaggle.ipynb`,
   `scripts/push_v10_kaggle.sh`.
-* Pushed dataset (`mykhailokozyrev/bpm-v10-abt`) and kernel
-  (`mykhailokozyrev/bpm-v10-chronos`) to Kaggle's free GPU tier.
+* Pushed dataset (`<kaggle-user>/bpm-v10-abt`) and kernel
+  (`<kaggle-user>/bpm-v10-chronos`) to Kaggle's free GPU tier.
 * **Run 1:** failed with `RuntimeError: operator torchvision::nms
   does not exist` (Kaggle's `chronos-forecasting==1.4.1` triggers
   transformers' object-detection imports, which clash with their

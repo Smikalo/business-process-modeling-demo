@@ -26,7 +26,7 @@ CELLS_SOURCE: list[tuple[str, str]] = [
      "(~90 min on T4 ×2).\n"
      "\n"
      "**Output:** `preds_v14_globalnn_{val,test}.csv` to `/kaggle/working/`. "
-     "Pull via `kaggle kernels output mykhailokozyrev/bpm-v14-globalnn`."),
+     "Pull via `kaggle kernels output <user>/bpm-v14-globalnn` (use your Kaggle handle)."),
 
     ("code",
      "# Cell 1: GPU compatibility detect + force-install torch BEFORE any import\n"

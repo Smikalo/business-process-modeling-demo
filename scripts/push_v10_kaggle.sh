@@ -4,7 +4,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 export KAGGLE_API_TOKEN="$(grep KAGGLE_API_TOKEN .env | cut -d= -f2)"
-USERNAME="mykhailokozyrev"
+USERNAME="${KAGGLE_USERNAME:-${KAGGLE_USER:-}}"
+if [[ -z "$USERNAME" ]]; then
+  echo "Set KAGGLE_USERNAME in your environment or .env" >&2
+  exit 1
+fi
 DATASET_SLUG="$USERNAME/bpm-v10-abt"
 
 STAGE_DIR="$(mktemp -d)"

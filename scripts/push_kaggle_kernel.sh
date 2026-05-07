@@ -12,7 +12,7 @@
 # Usage:
 #   bash scripts/push_kaggle_kernel.sh
 #   bash scripts/push_kaggle_kernel.sh --notebook notebooks/v6_gpu_template.ipynb
-#   bash scripts/push_kaggle_kernel.sh --slug mykhailokozyrev/bpm-v6-train
+#   bash scripts/push_kaggle_kernel.sh --slug <kaggle-user>/bpm-v6-train
 
 set -euo pipefail
 

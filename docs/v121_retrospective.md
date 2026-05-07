@@ -105,8 +105,8 @@ is small in absolute terms but it is:
   macro, war intensity, etc.) actually contribute to the production
   model's predictions
 
-The data ceiling described in `docs/v12_v14_human_action_guide.md`
-still applies: this run brought us from ~63 % yearly cumulative to
+The data ceiling (see `docs/limitations-and-next-steps.md`) still
+applies: this run brought us from ~63 % yearly cumulative to
 **~63.4 %** by absorbing what EXT signals can offer at λ = 0.05. To
 go meaningfully higher we still need (a) granular partner sell-out,
 (b) more pre-COVID history, (c) GPU-fine-tuned foundation models
@@ -153,9 +153,9 @@ Scripts:
 ## V13 / V14 status (unchanged)
 
 V13 (Chronos / TimesFM / Moirai fine-tuning) and V14 (GlobalNN
-Transformer-encoder) remain GPU-dependent and gated on the human user
-running them on Colab / Kaggle. The handoff package
-(`docs/v12_v14_human_action_guide.md` + paste-and-run scripts) is
+Transformer-encoder) remain GPU-dependent and require running them on
+Colab / Kaggle. The notebooks (`notebooks/v13_chronos_finetune_colab.py`,
+`notebooks/v14_globalnn_colab.py`, `output/v14_kaggle_kernel/v14_globalnn.ipynb`) are
 ready. When V13 / V14 prediction CSVs appear in `output/`,
 `scripts/v13_lad_stack.py` and `scripts/v14_lad_stack.py` will
 automatically merge them into the V12.1 LAD pool.

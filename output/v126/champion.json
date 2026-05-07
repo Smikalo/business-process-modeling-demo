@@ -1,0 +1,47 @@
+{
+  "champion_weights": [
+    0.925,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.075
+  ],
+  "helpers": [
+    "v12_external",
+    "v11_g93",
+    "v13_chronos_ft",
+    "v12_external_g93",
+    "v14_globalnn"
+  ],
+  "OOF_recency": 0.40947999999999996,
+  "OOF_bias_recency_pct": -0.7786,
+  "bias_ceiling_used": 1.0,
+  "val_score": {
+    "n_rows": 30012,
+    "WAPE": 0.3324,
+    "MAE": 1.6384,
+    "RMSE": 3.8035,
+    "Bias_units": -0.0649,
+    "Agg_Bias_pct": -1.316,
+    "SMAPE_nz": 0.4168,
+    "Monthly_WAPE": 0.0398,
+    "SIMSCORE": 0.3589
+  },
+  "test_score": {
+    "n_rows": 17507,
+    "WAPE": 0.391,
+    "MAE": 2.003,
+    "RMSE": 5.0208,
+    "Bias_units": 0.1464,
+    "Agg_Bias_pct": 2.858,
+    "SMAPE_nz": 0.4861,
+    "Monthly_WAPE": 0.0736,
+    "SIMSCORE": 0.4421
+  },
+  "v122_aligned_simscore": 0.4416,
+  "v122_full_simscore": 0.4435,
+  "delta_aligned": 0.0005000000000000004,
+  "delta_relative_pct": 0.11322463768115953,
+  "promote": false
+}

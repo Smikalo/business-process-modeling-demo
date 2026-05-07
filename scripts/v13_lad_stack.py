@@ -64,11 +64,9 @@ def main() -> int:
             print(f"[skip] {tag} predictions not present")
 
     if not fms_present:
-        print("\nNo V13 fine-tuned FM preds present. Either:")
-        print("  - You haven't run the GPU notebooks yet (see")
-        print("    docs/v12_v14_human_action_guide.md Steps 1-3)")
-        print("  - Or you copied them somewhere else.")
-        print("Falling through: V13 == V12 (no improvement to LAD).")
+        print("\nNo V13 fine-tuned FM preds present. Either run the GPU")
+        print("notebooks (notebooks/v13_chronos_finetune_colab.py) or drop")
+        print("their predictions into output/. Falling through: V13 == V12.")
         # Make V12 final the V13 final (idempotent so audit_v13 doesn't crash)
         for split in ("val", "test"):
             src = OUT / f"preds_v12_final_{split}.csv"

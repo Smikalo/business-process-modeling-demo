@@ -10,7 +10,7 @@
 # limit.
 #
 # Usage:
-#   bash scripts/push_to_kaggle.sh                          # defaults: mykhailokozyrev/bpm-v6-abt, auto version note
+#   bash scripts/push_to_kaggle.sh                          # defaults: <kaggle-user>/bpm-v6-abt, auto version note
 #   bash scripts/push_to_kaggle.sh --dataset u/slug --version "note"
 #   bash scripts/push_to_kaggle.sh --dry-run                # stage only, no upload
 

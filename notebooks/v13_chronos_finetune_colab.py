@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────────────────────────────
 # V13 Chronos-T5-Small FINE-TUNE (Google Colab Free, T4 GPU)
-# Total time: ~2 hours wall-clock. Active human time: ~10 minutes.
+# Total time: ~2 hours wall-clock; ~10 minutes of interactive time.
 #
 # This is a **plain Python script** that you paste into Google Colab
 # cell by cell (separated by `# %% Cell N: ...` markers below). It

@@ -164,7 +164,7 @@ pivot in Cell 3 has 73 columns covering 2020-01..2026-01).
 In your local terminal:
 
 ```bash
-cd /Users/m.kozyrev/Desktop/business-process-modeling-demo
+cd <repo-root>
 
 # either via gdrive CLI (`brew install rclone gdrive`)…
 gdrive download --recursive --path output v11_chronos
@@ -183,7 +183,7 @@ ls output/preds_v11_chronos_*.csv
 ## Step 6 — Re-run the V11 LAD search
 
 ```bash
-cd /Users/m.kozyrev/Desktop/business-process-modeling-demo
+cd <repo-root>
 source .venv/bin/activate
 PYTHONPATH=. python -m scripts.v11_lad_stack
 PYTHONPATH=. python -m scripts.v11_final_blend

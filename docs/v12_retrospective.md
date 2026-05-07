@@ -166,8 +166,10 @@ In priority order:
   `scripts/v14_lad_stack.py`,
   `src/models/global_nn.py`,
   `scripts/export_v14_globalnn_data.py`,
-  `docs/v12_v14_human_action_guide.md`) is ready for the human to run
-  on Colab/Kaggle whenever convenient.
+  `notebooks/v13_chronos_finetune_colab.py`,
+  `notebooks/v14_globalnn_colab.py`,
+  `output/v14_kaggle_kernel/v14_globalnn.ipynb`) is paste-and-run on
+  Colab or Kaggle.
 
 ---
 
@@ -179,8 +181,7 @@ In priority order:
 * `output/preds_v12_multiseed_{val,test}.csv` — 5-seed bagged predictions.
 * `output/preds_v12_intermittent_{val,test}.csv` — Croston/SBA/TSB
   specialist predictions.
-* Full V13 GPU handoff package — Colab/Kaggle paste-and-run scripts +
-  human-action guide.
+* Full V13 GPU pipeline — Colab/Kaggle paste-and-run scripts.
 * `src/models/global_nn.py` — Transformer-encoder skeleton ready
   for V14 fine-tuning.
 * `scripts/v13_lad_stack.py`, `scripts/v14_lad_stack.py` — automatic

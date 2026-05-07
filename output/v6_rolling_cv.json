@@ -1,6 +1,6 @@
 {
   "config": {
-    "abt": "/Users/m.kozyrev/Desktop/business-process-modeling-demo/output/abt_v6_cached.parquet",
+    "abt": "output/abt_v6_cached.parquet",
     "target": "target_qty_imputed",
     "reg_objective": "pinball",
     "reg_objective_kwargs": {

@@ -81,7 +81,7 @@ V7.5's channel-only reconciliation (shrink 0.8) cannot address (1) or
 ### A. Symmetric LightGBM retrains on Kaggle GPU (dropped)
 
 Notebook: `notebooks/v76_symmetric_retrain.ipynb` →
-`mykhailokozyrev/bpm-v76-symmetric` on Kaggle.
+`<kaggle-user>/bpm-v76-symmetric` on Kaggle.
 
 Trained five symmetric-objective V7 variants (Tweedie 1.3/1.5, MAE,
 Huber, L2) on the existing V7 feature set.  Standalone test
@@ -92,7 +92,7 @@ analysis lives in `docs/v76_symmetric_retrain_report.md`.
 ### B. Decorrelated bases on Kaggle GPU (kept v77_recent)
 
 Notebook: `notebooks/v77_decorrelated_bases.ipynb` →
-`mykhailokozyrev/bpm-v77-decorr`.  Five strategies:
+`<kaggle-user>/bpm-v77-decorr`.  Five strategies:
 
 | variant            | strategy                                              | test SIMSCORE |
 |--------------------|-------------------------------------------------------|--------------:|
@@ -203,10 +203,10 @@ recency-weighted OOF 0.4674, gap +0.0099.
 # Train decorrelated bases on Kaggle (already done, preds in output/)
 bash scripts/push_kaggle_kernel.sh \
      --notebook notebooks/v77_decorrelated_bases.ipynb \
-     --slug   mykhailokozyrev/bpm-v77-decorr \
-     --dataset mykhailokozyrev/bpm-v6-abt
+     --slug   <kaggle-user>/bpm-v77-decorr \
+     --dataset <kaggle-user>/bpm-v6-abt
 bash scripts/pull_kaggle_kernel_output.sh \
-     --slug   mykhailokozyrev/bpm-v77-decorr
+     --slug   <kaggle-user>/bpm-v77-decorr
 
 # Refit V7.7 stacker locally (≈70 s)
 OMP_NUM_THREADS=1 python -m scripts.v77_lad_stack

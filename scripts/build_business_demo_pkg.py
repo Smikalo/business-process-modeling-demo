@@ -1,21 +1,23 @@
-"""Build the Anna-presentation package: 3 business-facing visualizations
-+ a Заказник-format Excel comparing Anna's expert plan vs our model forecast
-vs actuals on the test window (Jul 2025 → Mar 2026, 9 months).
+"""Build the business demo package: 3 business-facing visualizations
++ a Заказник-format Excel comparing the manual expert plan vs the model
+forecast vs actuals on the test window (Jul 2025 → Jan 2026, 7 months).
 
-What Anna asked for in the conversation:
-  Panel 1: Dynamic Fact vs Forecast (monthly), per brand and overall.
-  Panel 2: Business value — error reduction → UAH freed (holding/lost margin).
-  Panel 3: Seasonality stress test, extended Nov 2025 → Mar 2026 (covers
-            the December peak + post-NY drop she's worried about).
+The 3 panels:
+  Panel 1: Monthly Fact vs Forecast dynamics, per brand and overall.
+  Panel 2: Business value — error reduction → UAH freed (holding cost +
+            lost margin).
+  Panel 3: Seasonality stress test (Sep 2025 → Jan 2026) — December
+            peak + post-NY drop.
 
-  Plus: an Excel artifact in her own Заказник format with model forecast
-        added alongside expert plan and actuals.
+Plus an Excel artifact in the standard "Заказник" layout with model
+forecast added alongside expert plan and actuals.
 
-We use V12.2_champion (production model, test SIMSCORE 0.4435).
-Anna's expert plan ('Отгрузки План') is read directly from
-data/Заказник Infantino 2026 (1).xlsx. Same approach for Cubic Fun.
+Uses V12.2_champion (production model, test SIMSCORE 0.4435). The
+manual expert plan ('Отгрузки План') is read directly from any
+zakaznik-format xlsx files present in data/. Synthetic / placeholder
+plans are skipped automatically.
 
-Outputs: output/anna_v122_pkg/
+Outputs: output/business_demo_pkg/
 """
 from __future__ import annotations
 
@@ -28,7 +30,7 @@ import openpyxl
 import pandas as pd
 
 REPO = Path(__file__).resolve().parent.parent
-OUT = REPO / "output" / "anna_v122_pkg"
+OUT = REPO / "output" / "business_demo_pkg"
 OUT.mkdir(parents=True, exist_ok=True)
 DATA = REPO / "data"
 KEY = ["Период", "Партнер", "Артикул"]
@@ -129,7 +131,7 @@ def load_brand_map() -> pd.DataFrame:
 
 
 # ----------------------------------------------------------------------
-# 2) Anna's expert plan extraction from the Заказник Excel files
+# 2) Manual expert plan extraction from the Заказник Excel files
 # ----------------------------------------------------------------------
 
 def parse_zakaznik_brand_plan(xlsx_path: Path,
@@ -250,7 +252,7 @@ def add_uah_columns(df_units: pd.DataFrame, price: pd.DataFrame) -> pd.DataFrame
 # ----------------------------------------------------------------------
 
 def panel_1_fact_vs_forecast(brand_uah: pd.DataFrame,
-                              anna_plan: pd.DataFrame | None,
+                              expert_plan: pd.DataFrame | None,
                               brands: list[str],
                               path: Path,
                               csv_path: Path) -> None:
@@ -273,9 +275,9 @@ def panel_1_fact_vs_forecast(brand_uah: pd.DataFrame,
         ax.bar(x, sub["forecast_uah"] / 1e6, bar_w,
                 label=t("panel1_forecast"), color="#2ca02c")
 
-        if anna_plan is not None:
-            ap = anna_plan[(anna_plan["Бренд"] == b)
-                           & anna_plan["Период"].isin(months)].copy()
+        if expert_plan is not None:
+            ap = expert_plan[(expert_plan["Бренд"] == b)
+                           & expert_plan["Период"].isin(months)].copy()
             ap = ap.set_index("Период").reindex(months).reset_index()
             if ap["Plan_UAH"].notna().any():
                 ax.bar(x + bar_w, ap["Plan_UAH"] / 1e6, bar_w,
@@ -426,7 +428,7 @@ def panel_2_business_value(brand_uah: pd.DataFrame,
 def panel_3_seasonality(brand_uah: pd.DataFrame,
                           path: Path,
                           csv_path: Path) -> None:
-    # Anna asked for Nov-March; test data only goes to Jan 2026, so we
+    # Original request was for Nov-March; test data only goes to Jan 2026, so we
     # use Sep'25 → Jan'26 to capture pre-holiday + peak + post-NY drop.
     holiday = ["2025-09", "2025-10", "2025-11", "2025-12", "2026-01"]
     fig, axes = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
@@ -501,7 +503,7 @@ def panel_3_seasonality(brand_uah: pd.DataFrame,
 def build_zakaznik_excel(sku_uah: pd.DataFrame,
                           brand_uah: pd.DataFrame,
                           path: Path) -> None:
-    """Write an Excel that mirrors Anna's Заказник layout but with
+    """Write an Excel that mirrors the standard Заказник layout but with
     model forecast added alongside actuals."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
@@ -735,7 +737,7 @@ def build_zakaznik_excel_en(sku_uah: pd.DataFrame,
 
 
 def build_exec_summary_png(brand_uah: pd.DataFrame,
-                             anna_plan: pd.DataFrame | None,
+                             expert_plan: pd.DataFrame | None,
                              path: Path) -> None:
     """1-page executive summary PNG combining all 3 panels' headline numbers."""
     fig = plt.figure(figsize=(14, 10))
@@ -901,26 +903,34 @@ def main() -> int:
           f"target {brand_uah['target_uah'].sum()/1e6:.1f} млн UAH, "
           f"forecast {brand_uah['forecast_uah'].sum()/1e6:.1f} млн UAH")
 
-    # Try to extract Anna's expert plans from each Заказник
-    anna_plans = []
-    plan_sources = [
-        (DATA / "Заказник Infantino 2026 (1).xlsx", "Заказ ", "Infantino"),
-        (DATA / "Заказник 2026_Cubic Fun 06.03.2026_Таня_2.xlsx", "все", "Cubic Fun"),
-    ]
-    for xlsx_path, sheet, brand in plan_sources:
+    # Try to extract manual expert plans from any zakaznik-style xlsx
+    # in data/. We auto-detect by filename pattern + brand keyword.
+    expert_plans = []
+    import glob as _glob
+    candidates = sorted(set(_glob.glob(str(DATA / "*akaznik*.xlsx"))
+                            + _glob.glob(str(DATA / "*аказник*.xlsx"))
+                            + _glob.glob(str(DATA / "*аказ*.xlsx"))))
+    for xlsx_path in candidates:
+        path = Path(xlsx_path)
+        name_lc = path.stem.lower()
+        if "infantino" in name_lc:
+            brand, sheet = "Infantino", "Заказ "
+        elif "cubic" in name_lc or "куб" in name_lc:
+            brand, sheet = "Cubic Fun", "все"
+        else:
+            continue
         try:
-            p = parse_zakaznik_brand_plan(xlsx_path, sheet, brand)
+            p = parse_zakaznik_brand_plan(path, sheet, brand)
             if not p.empty and p["Plan_UAH"].notna().any():
-                anna_plans.append(p)
+                expert_plans.append(p)
                 test_months_in = p[p["Период"].isin(TEST_MONTHS)]
-                print(f"  loaded {brand}: {p['Plan_UAH'].notna().sum()} months total, "
+                print(f"  loaded {brand} from {path.name}: "
+                      f"{p['Plan_UAH'].notna().sum()} months total, "
                       f"{test_months_in['Plan_UAH'].notna().sum()} in test window")
-            else:
-                print(f"  {brand}: no plan data extracted")
         except Exception as e:
-            print(f"  {brand}: error {e}")
+            print(f"  {brand} ({path.name}): error {e}")
 
-    anna_plan = pd.concat(anna_plans, ignore_index=True) if anna_plans else None
+    expert_plan = pd.concat(expert_plans, ignore_index=True) if expert_plans else None
 
     BRANDS_FOR_PANEL = sorted([b for b in brand_uah["Бренд"].unique()
                                   if b in ("Infantino", "Cubic Fun", "CubicFun", "Djeco")])
@@ -929,7 +939,7 @@ def main() -> int:
 
     suffix = "_EN" if LANG == "en" else ""
     print(f"\n=== Building 3 panels (lang={LANG}) ===")
-    panel_1_fact_vs_forecast(brand_uah, anna_plan, BRANDS_FOR_PANEL,
+    panel_1_fact_vs_forecast(brand_uah, expert_plan, BRANDS_FOR_PANEL,
                               OUT / f"panel1_fact_vs_forecast{suffix}.png",
                               OUT / f"panel1_fact_vs_forecast{suffix}.csv")
     panel_2_business_value(brand_uah, sku_data,
@@ -940,7 +950,7 @@ def main() -> int:
                           OUT / f"panel3_seasonality_stress{suffix}.csv")
 
     print(f"\n=== Building 1-page exec summary ({LANG}) ===")
-    build_exec_summary_png(brand_uah, anna_plan,
+    build_exec_summary_png(brand_uah, expert_plan,
                             OUT / f"exec_summary{suffix}.png")
 
     if LANG == "ru":  # only build Russian Excel; English version is below

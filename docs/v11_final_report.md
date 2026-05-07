@@ -283,7 +283,7 @@ months where V10 was structurally most off.
 ## Production deployment
 
 ```bash
-cd /Users/m.kozyrev/Desktop/business-process-modeling-demo
+cd <repo-root>
 source .venv/bin/activate
 
 # refresh ABT (only if shipments / receipts / stock data changed)
