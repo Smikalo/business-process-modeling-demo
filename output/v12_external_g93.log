@@ -1,0 +1,146 @@
+INFO V12.4 (g93) bagging: seeds=[42, 137, 271, 314, 1729], workers=2, gamma=0.93
+INFO ABT: 162526 rows, 207 features (source=abt_v12_external_recent_only.parquet)
+INFO ABT: 162526 rows, 207 features (source=abt_v12_external_recent_only.parquet)
+INFO filter_active: 76986 → 47178 rows (61.3%), 2621 active pairs
+INFO filter_active: 76986 → 47178 rows (61.3%), 2621 active pairs
+INFO Split: train=47178 val=31452 test=20968
+INFO Split: train=47178 val=31452 test=20968
+INFO V7.1 recency weights: γ=0.930, train mean=0.579 (min=0.291, max=1.000)
+INFO V12 multi-seed: LightGBM seed=137 propagated to clf+reg
+INFO V7.1 recency weights: γ=0.930, train mean=0.579 (min=0.291, max=1.000)
+INFO V12 multi-seed: LightGBM seed=42 propagated to clf+reg
+INFO Stage 1 (classifier): 136 rounds in 10.6s
+INFO Stage 1 (classifier): 191 rounds in 13.1s
+INFO Stage 2 (regressor): 188 rounds in 20.0s
+INFO V7 base fitted in 33.0s
+INFO val split: corrector set=18347 rows (7 periods) | meta set=13105 rows (5 periods)
+INFO Stage 2 (regressor): 221 rounds in 23.5s
+INFO V7 base fitted in 34.1s
+INFO val split: corrector set=18347 rows (7 periods) | meta set=13105 rows (5 periods)
+INFO residual corrector: trained on 10 segments (of 15 candidates)
+INFO residual corrector: trained on 10 segments (of 15 candidates)
+INFO stacker weights: {'v4': 0.04, 'v5': 0.363, 'v6': 0.283, 'v7': 0.365}
+INFO conformal: 11 segment-specific intervals + 1 global fallback
+INFO   V7_base      val  WAPE=0.4117 MAPE_nz=0.5039 RMSE=4.953 Bias=-0.816
+INFO   V7_base      test WAPE=0.4404 MAPE_nz=0.5465 RMSE=5.956 Bias=-1.054
+INFO   V7_cal       val  WAPE=0.4120 MAPE_nz=0.4913 RMSE=4.949 Bias=-0.777
+INFO   V7_cal       test WAPE=0.4362 MAPE_nz=0.5306 RMSE=5.915 Bias=-1.003
+INFO   V7           val  WAPE=0.3401 MAPE_nz=0.4403 RMSE=4.098 Bias=-0.348
+INFO   V7           test WAPE=0.4230 MAPE_nz=0.5728 RMSE=5.310 Bias=-0.488
+INFO   V7_stacked   val  WAPE=0.3846 MAPE_nz=0.5094 RMSE=3.814 Bias=+0.050
+INFO   V7_stacked   test WAPE=0.4182 MAPE_nz=0.5690 RMSE=4.464 Bias=+0.001
+INFO stacker weights: {'v4': 0.03, 'v5': 0.351, 'v6': 0.257, 'v7': 0.411}
+INFO Total time: 44.9s
+INFO ABT: 162526 rows, 207 features (source=abt_v12_external_recent_only.parquet)
+INFO conformal: 11 segment-specific intervals + 1 global fallback
+INFO   V7_base      val  WAPE=0.4057 MAPE_nz=0.5093 RMSE=4.826 Bias=-0.712
+INFO   V7_base      test WAPE=0.4414 MAPE_nz=0.5543 RMSE=5.863 Bias=-1.032
+INFO   V7_cal       val  WAPE=0.4059 MAPE_nz=0.4999 RMSE=4.820 Bias=-0.652
+INFO   V7_cal       test WAPE=0.4383 MAPE_nz=0.5456 RMSE=5.815 Bias=-0.969
+INFO   V7           val  WAPE=0.3392 MAPE_nz=0.4410 RMSE=4.103 Bias=-0.358
+INFO   V7           test WAPE=0.4264 MAPE_nz=0.5798 RMSE=5.308 Bias=-0.563
+INFO   V7_stacked   val  WAPE=0.3808 MAPE_nz=0.5027 RMSE=3.799 Bias=+0.048
+INFO   V7_stacked   test WAPE=0.4177 MAPE_nz=0.5680 RMSE=4.455 Bias=-0.036
+INFO filter_active: 76986 → 47178 rows (61.3%), 2621 active pairs
+INFO Split: train=47178 val=31452 test=20968
+INFO V7.1 recency weights: γ=0.930, train mean=0.579 (min=0.291, max=1.000)
+INFO V12 multi-seed: LightGBM seed=271 propagated to clf+reg
+INFO Total time: 45.8s
+INFO ABT: 162526 rows, 207 features (source=abt_v12_external_recent_only.parquet)
+INFO filter_active: 76986 → 47178 rows (61.3%), 2621 active pairs
+INFO Split: train=47178 val=31452 test=20968
+INFO V7.1 recency weights: γ=0.930, train mean=0.579 (min=0.291, max=1.000)
+INFO V12 multi-seed: LightGBM seed=314 propagated to clf+reg
+INFO Stage 1 (classifier): 131 rounds in 9.8s
+INFO Stage 1 (classifier): 136 rounds in 10.0s
+INFO Stage 2 (regressor): 195 rounds in 21.4s
+INFO V7 base fitted in 31.2s
+INFO val split: corrector set=18347 rows (7 periods) | meta set=13105 rows (5 periods)
+INFO residual corrector: trained on 10 segments (of 15 candidates)
+INFO stacker weights: {'v4': 0.042, 'v5': 0.369, 'v6': 0.326, 'v7': 0.309}
+INFO conformal: 11 segment-specific intervals + 1 global fallback
+INFO   V7_base      val  WAPE=0.4120 MAPE_nz=0.5053 RMSE=4.936 Bias=-0.787
+INFO   V7_base      test WAPE=0.4405 MAPE_nz=0.5434 RMSE=5.937 Bias=-1.085
+INFO   V7_cal       val  WAPE=0.4120 MAPE_nz=0.4946 RMSE=4.928 Bias=-0.729
+INFO   V7_cal       test WAPE=0.4363 MAPE_nz=0.5306 RMSE=5.894 Bias=-1.020
+INFO   V7           val  WAPE=0.3422 MAPE_nz=0.4413 RMSE=4.140 Bias=-0.322
+INFO   V7           test WAPE=0.4254 MAPE_nz=0.5691 RMSE=5.379 Bias=-0.557
+INFO   V7_stacked   val  WAPE=0.3898 MAPE_nz=0.5165 RMSE=3.848 Bias=+0.047
+INFO   V7_stacked   test WAPE=0.4199 MAPE_nz=0.5704 RMSE=4.466 Bias=-0.020
+INFO Total time: 42.2s
+INFO ABT: 162526 rows, 207 features (source=abt_v12_external_recent_only.parquet)
+INFO filter_active: 76986 → 47178 rows (61.3%), 2621 active pairs
+INFO Split: train=47178 val=31452 test=20968
+INFO V7.1 recency weights: γ=0.930, train mean=0.579 (min=0.291, max=1.000)
+INFO V12 multi-seed: LightGBM seed=1729 propagated to clf+reg
+INFO Stage 2 (regressor): 337 rounds in 32.1s
+INFO V7 base fitted in 42.1s
+INFO val split: corrector set=18347 rows (7 periods) | meta set=13105 rows (5 periods)
+INFO residual corrector: trained on 10 segments (of 15 candidates)
+INFO Stage 1 (classifier): 148 rounds in 10.8s
+INFO stacker weights: {'v4': 0.023, 'v5': 0.343, 'v6': 0.288, 'v7': 0.387}
+INFO conformal: 11 segment-specific intervals + 1 global fallback
+INFO   V7_base      val  WAPE=0.4086 MAPE_nz=0.5014 RMSE=4.864 Bias=-0.777
+INFO   V7_base      test WAPE=0.4440 MAPE_nz=0.5467 RMSE=6.006 Bias=-1.092
+INFO   V7_cal       val  WAPE=0.4087 MAPE_nz=0.4921 RMSE=4.857 Bias=-0.722
+INFO   V7_cal       test WAPE=0.4408 MAPE_nz=0.5365 RMSE=5.964 Bias=-1.034
+INFO   V7           val  WAPE=0.3400 MAPE_nz=0.4406 RMSE=4.121 Bias=-0.362
+INFO   V7           test WAPE=0.4285 MAPE_nz=0.5805 RMSE=5.424 Bias=-0.579
+INFO   V7_stacked   val  WAPE=0.3829 MAPE_nz=0.5046 RMSE=3.820 Bias=+0.028
+INFO   V7_stacked   test WAPE=0.4177 MAPE_nz=0.5671 RMSE=4.504 Bias=-0.051
+INFO Total time: 54.9s
+INFO Stage 2 (regressor): 257 rounds in 18.3s
+INFO V7 base fitted in 29.2s
+INFO val split: corrector set=18347 rows (7 periods) | meta set=13105 rows (5 periods)
+INFO residual corrector: trained on 10 segments (of 15 candidates)
+INFO stacker weights: {'v4': 0.047, 'v5': 0.355, 'v6': 0.28, 'v7': 0.362}
+INFO conformal: 11 segment-specific intervals + 1 global fallback
+INFO   V7_base      val  WAPE=0.4067 MAPE_nz=0.4983 RMSE=4.843 Bias=-0.768
+INFO   V7_base      test WAPE=0.4433 MAPE_nz=0.5468 RMSE=6.016 Bias=-1.066
+INFO   V7_cal       val  WAPE=0.4066 MAPE_nz=0.4872 RMSE=4.837 Bias=-0.719
+INFO   V7_cal       test WAPE=0.4398 MAPE_nz=0.5338 RMSE=5.966 Bias=-1.011
+INFO   V7           val  WAPE=0.3417 MAPE_nz=0.4427 RMSE=4.109 Bias=-0.333
+INFO   V7           test WAPE=0.4310 MAPE_nz=0.5775 RMSE=5.458 Bias=-0.576
+INFO   V7_stacked   val  WAPE=0.3848 MAPE_nz=0.5072 RMSE=3.822 Bias=+0.030
+INFO   V7_stacked   test WAPE=0.4207 MAPE_nz=0.5691 RMSE=4.506 Bias=-0.056
+INFO Total time: 37.1s
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's binary_logloss: 0.297667
+Early stopping, best iteration is:
+[191]	valid_0's binary_logloss: 0.297215
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's quantile: 1.21231
+Early stopping, best iteration is:
+[188]	valid_0's quantile: 1.21215
+Training until validation scores don't improve for 60 rounds
+Early stopping, best iteration is:
+[131]	valid_0's binary_logloss: 0.29666
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's quantile: 1.21505
+Early stopping, best iteration is:
+[195]	valid_0's quantile: 1.21487
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's binary_logloss: 0.298002
+Early stopping, best iteration is:
+[148]	valid_0's binary_logloss: 0.296111
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's quantile: 1.20016
+Early stopping, best iteration is:
+[257]	valid_0's quantile: 1.19847
+Training until validation scores don't improve for 60 rounds
+Early stopping, best iteration is:
+[136]	valid_0's binary_logloss: 0.297036
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's quantile: 1.20233
+Early stopping, best iteration is:
+[221]	valid_0's quantile: 1.19998
+Training until validation scores don't improve for 60 rounds
+Early stopping, best iteration is:
+[136]	valid_0's binary_logloss: 0.296162
+Training until validation scores don't improve for 60 rounds
+[200]	valid_0's quantile: 1.20759
+Early stopping, best iteration is:
+[337]	valid_0's quantile: 1.206
+INFO V12_external_g93 val: {'n_rows': 31452, 'WAPE': 0.3372, 'MAE': 1.5931, 'RMSE': 4.0795, 'Bias_units': -0.3447, 'Agg_Bias_pct': -7.297, 'SMAPE_nz': 0.4225, 'Monthly_WAPE': 0.0659, 'SIMSCORE': 0.4066}
+INFO V12_external_g93 test: {'n_rows': 20968, 'WAPE': 0.4219, 'MAE': 1.9622, 'RMSE': 5.3402, 'Bias_units': -0.5526, 'Agg_Bias_pct': -11.881, 'SMAPE_nz': 0.5698, 'Monthly_WAPE': 0.1677, 'SIMSCORE': 0.5651}
+INFO Total wall-time: 128.7 s
