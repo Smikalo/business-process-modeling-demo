@@ -1,0 +1,73 @@
+[{"stream_name":"stderr","time":6.722094398,"data":"/usr/local/lib/python3.12/dist-packages/nbformat/__init__.py:96: MissingIDFieldWarning: Cell is missing an id field, this will become a hard error in future nbformat versions. You may want to use `normalize()` on your notebooks before validations (available since nbformat 5.1.4). Previous versions of nbformat are fixing this issue transparently, and will stop doing so in the future.\n"}
+,{"stream_name":"stderr","time":6.722191088,"data":"  validate(nb)\n"}
+,{"stream_name":"stderr","time":7.637626395,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":7.63766087,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":7.637667285,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":7.637672233,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stderr","time":8.351396302,"data":"0.00s - Debugger warning: It seems that frozen modules are being used, which may\n"}
+,{"stream_name":"stderr","time":8.351433431,"data":"0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off\n"}
+,{"stream_name":"stderr","time":8.351441471,"data":"0.00s - to python to disable frozen modules.\n"}
+,{"stream_name":"stderr","time":8.351449496,"data":"0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.\n"}
+,{"stream_name":"stdout","time":9.796638111,"data":"nvidia-smi: Tesla P100-PCIE-16GB, 6.0\n"}
+,{"stream_name":"stdout","time":9.79669631,"data":"GPU sm_6.0: incompatible with default torch — installing 2.5.1+cu121...\n"}
+,{"stream_name":"stdout","time":20.149864634,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 780.4/780.4 MB 2.3 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":20.351899498,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 780.4/780.4 MB 2.3 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":26.273073015,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.3/7.3 MB 2.4 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":26.475314741,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.3/7.3 MB 2.4 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":26.527618496,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 84.3 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":26.72984228,"data":"     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 84.3 MB/s eta 0:00:00\n"}
+,{"stream_name":"stdout","time":68.1948281,"data":"✓ torch 2.5.1 installed (will be loaded fresh in Cell 1b)\n"}
+,{"stream_name":"stdout","time":72.218173711,"data":"torch 2.5.1+cu121 cuda True\n"}
+,{"stream_name":"stdout","time":72.218219157,"data":"GPU: Tesla P100-PCIE-16GB\n"}
+,{"stream_name":"stdout","time":72.218225167,"data":"GPU capability: sm_60\n"}
+,{"stream_name":"stdout","time":72.218268812,"data":"CUDA smoke test OK: y=[1.0, 1.0]\n"}
+,{"stream_name":"stdout","time":72.245051224,"data":"/kaggle/input/ tree (first 3 levels):\n"}
+,{"stream_name":"stdout","time":72.245108101,"data":"input/\n"}
+,{"stream_name":"stdout","time":72.245116113,"data":"  datasets/\n"}
+,{"stream_name":"stdout","time":72.245140679,"data":"    mykhailokozyrev/\n"}
+,{"stream_name":"stdout","time":72.258182085,"data":"      bpm-v14-globalnn-data/\n"}
+,{"stream_name":"stdout","time":72.258220905,"data":"        manifest.json\n"}
+,{"stream_name":"stdout","time":72.258224866,"data":"        vocab.json\n"}
+,{"stream_name":"stdout","time":72.258228848,"data":"        train.parquet\n"}
+,{"stream_name":"stdout","time":72.258248078,"data":"        test.parquet\n"}
+,{"stream_name":"stdout","time":72.258253224,"data":"        val.parquet\n"}
+,{"stream_name":"stdout","time":72.258257821,"data":"\n"}
+,{"stream_name":"stdout","time":72.258262495,"data":"found train.parquet at: ['/kaggle/input/datasets/mykhailokozyrev/bpm-v14-globalnn-data/train.parquet']\n"}
+,{"stream_name":"stdout","time":72.258267936,"data":"→ using DATA_DIR = /kaggle/input/datasets/mykhailokozyrev/bpm-v14-globalnn-data\n"}
+,{"stream_name":"stdout","time":72.258273487,"data":"manifest: 63 partners, 514 skus, 5 brands, 5 channels\n"}
+,{"stream_name":"stdout","time":73.253745394,"data":"loaded: (230958, 211) (51324, 211) (34216, 211)\n"}
+,{"stream_name":"stdout","time":73.253789713,"data":"n_numeric: 202\n"}
+,{"stream_name":"stdout","time":75.131832894,"data":"  mu range [-11.1, 6.4e+06]  sd range [0.00403, 2.73e+06]\n"}
+,{"stream_name":"stdout","time":76.491761788,"data":"✓ all tensors finite\n"}
+,{"stream_name":"stdout","time":76.530381482,"data":"GlobalNN: 1.82M params\n"}
+,{"stream_name":"stdout","time":80.914530089,"data":"smoke: loss=1.7060  finite=True\n"}
+,{"stream_name":"stdout","time":80.914573386,"data":"✓ starting training\n"}
+,{"stream_name":"stdout","time":90.304088379,"data":"epoch  1/15  train=0.8003  val=0.8287  ★\n"}
+,{"stream_name":"stdout","time":99.53439899,"data":"epoch  2/15  train=0.5799  val=0.6694  ★\n"}
+,{"stream_name":"stdout","time":108.661851659,"data":"epoch  3/15  train=0.5109  val=0.6363  ★\n"}
+,{"stream_name":"stdout","time":117.620640165,"data":"epoch  4/15  train=0.4680  val=0.6072  ★\n"}
+,{"stream_name":"stdout","time":126.769695978,"data":"epoch  5/15  train=0.4414  val=0.6060  ★\n"}
+,{"stream_name":"stdout","time":135.934097481,"data":"epoch  6/15  train=0.4216  val=0.5775  ★\n"}
+,{"stream_name":"stdout","time":145.008511874,"data":"epoch  7/15  train=0.4063  val=0.5833   \n"}
+,{"stream_name":"stdout","time":154.007168211,"data":"epoch  8/15  train=0.3926  val=0.5612  ★\n"}
+,{"stream_name":"stdout","time":163.079998468,"data":"epoch  9/15  train=0.3825  val=0.5590  ★\n"}
+,{"stream_name":"stdout","time":172.374033105,"data":"epoch 10/15  train=0.3732  val=0.5564  ★\n"}
+,{"stream_name":"stdout","time":181.430411876,"data":"epoch 11/15  train=0.3664  val=0.5662   \n"}
+,{"stream_name":"stdout","time":190.565762814,"data":"epoch 12/15  train=0.3610  val=0.5569   \n"}
+,{"stream_name":"stdout","time":199.6304,"data":"epoch 13/15  train=0.3571  val=0.5507  ★\n"}
+,{"stream_name":"stdout","time":208.740273974,"data":"epoch 14/15  train=0.3553  val=0.5523   \n"}
+,{"stream_name":"stdout","time":217.824978222,"data":"epoch 15/15  train=0.3539  val=0.5531   \n"}
+,{"stream_name":"stdout","time":217.825014237,"data":"\n"}
+,{"stream_name":"stdout","time":217.825021601,"data":"best val loss = 0.5507; saved to /kaggle/working/v14_globalnn_best.pt\n"}
+,{"stream_name":"stdout","time":218.646198352,"data":"wrote val (51,324), test (34,216)\n"}
+,{"stream_name":"stdout","time":218.64625768,"data":"val: rows=51,324  WAPE=0.469  bias%=-2.0\n"}
+,{"stream_name":"stdout","time":218.646265931,"data":"test: rows=34,216  WAPE=0.522  bias%=-6.9\n"}
+,{"stream_name":"stderr","time":224.545411578,"data":"/usr/local/lib/python3.12/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\\|'\n"}
+,{"stream_name":"stderr","time":224.54545236,"data":"  cells[i][c] = re.sub('\\\\\\\\\\|', '|', cell)\n"}
+,{"stream_name":"stderr","time":224.728795097,"data":"/usr/local/lib/python3.12/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\\_'\n"}
+,{"stream_name":"stderr","time":224.728825843,"data":"  text = re.sub(r'_', '\\_', text) # Escape underscores in display text\n"}
+,{"stream_name":"stderr","time":225.445794886,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to notebook\n"}
+,{"stream_name":"stderr","time":225.81013187,"data":"[NbConvertApp] Writing 23828 bytes to __notebook__.ipynb\n"}
+,{"stream_name":"stderr","time":228.720146655,"data":"[NbConvertApp] Converting notebook __notebook__.ipynb to html\n"}
+,{"stream_name":"stderr","time":229.762609149,"data":"[NbConvertApp] Writing 355005 bytes to __results__.html\n"}
+]

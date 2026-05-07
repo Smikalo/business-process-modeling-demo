@@ -53,15 +53,37 @@ def main() -> int:
     for c in cats:
         abt[f"{c}_idx"] = abt[c].astype(str).map(vocab[c]).fillna(0).astype(np.int32)
 
-    # Drop string-categorical and other non-tensor-friendly columns
-    drop_cols = [c for c in cats if c in abt.columns]
-    drop_cols += [c for c in abt.columns if abt[c].dtype == "object"
-                   and c not in ("Период",)]
+    # CRITICAL: use the canonical leakage exclusion list from src.model_v2.
+    # Includes "Количество_sales" (== target), "target_qty_imputed", current-
+    # month revenue/shipments/inventory/price columns. V12.x LightGBM models
+    # exclude these via get_feature_columns_v2; V14 export must too, otherwise
+    # the GlobalNN cheats by reading the target out of the feature space.
+    from src.model_v2 import get_feature_columns_v2
+    safe_feature_cols = get_feature_columns_v2(abt)
+    print(f"safe_feature_cols (no leakage): {len(safe_feature_cols)}")
 
-    feature_cols = [c for c in abt.columns
-                     if c not in drop_cols
-                     and c not in ("target_qty", "Период")]
-    print(f"feature_cols: {len(feature_cols)} (categoricals + numerics)")
+    # Drop string-categorical (replaced by *_idx) and Period
+    drop_cols = set(cats) | {"target_qty", "Период"}
+
+    feature_cols = [c for c in safe_feature_cols if c not in drop_cols]
+    # Add the categorical _idx columns (numeric, safe) — but only if not
+    # already present in safe_feature_cols (which scans abt.columns).
+    for c in cats:
+        idx = f"{c}_idx"
+        if idx not in feature_cols and idx in abt.columns:
+            feature_cols.append(idx)
+    # De-dup just in case
+    seen = set()
+    feature_cols = [c for c in feature_cols if not (c in seen or seen.add(c))]
+    # Filter to columns that actually exist in abt
+    feature_cols = [c for c in feature_cols if c in abt.columns]
+    print(f"feature_cols: {len(feature_cols)} (numerics + categorical idx)")
+    # Sanity check: target_qty and Количество_sales must NOT be in there
+    for forbidden in ["target_qty", "target_qty_imputed", "Количество_sales",
+                       "Выручка_sales", "Количество_ship", "Выручка_ship"]:
+        assert forbidden not in feature_cols, \
+            f"LEAKAGE: {forbidden} in feature_cols!"
+    print("✓ no target-leakage columns in feature set")
 
     abt["Период_str"] = abt["Период"].astype(str)
     splits = {
