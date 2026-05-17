@@ -1,12 +1,16 @@
 # AI Demand Forecasting: Scaling Strategy, Cost Estimation, and Operational Framework
 
+This document outlines the strategic roadmap for scaling the demand forecasting AI model, addressing current operational challenges, estimating computational infrastructure costs, and providing a rigorous return on investment (ROI) and budget analysis based on current market realities. Furthermore, it defines the strict legal and financial framework governing the execution of this cross-border B2B contract.
+
+---
+
 ## 1. Technical Development and Scaling Plan
 
 Based on the empirical results of the pilot project (encompassing 3 brands) and the confirmed availability of data, the following plan is constructed on strictly realistic premises.
 
 ### 1.1 Data Integration
 * **Elimination of Manual Data Exchange:** We will establish direct integration with the client's ERP system (`bas`), which houses the comprehensive database from 2020 onwards. This will enable the model to automatically extract relevant data (shipments, inventory, master data) and output forecasts without human intervention.
-* **Assortment Scaling:** The model's scope will be expanded from the 3 pilot brands to encompass the company's entire portfolio (8 brands).
+* **Assortment Scaling:** The model's scope will be expanded from the 3 pilot brands to encompass the 8 priority brands (~3,000 SKUs) identified by management.
 
 ### 1.2 Targeted Model Improvements (Addressing Management Feedback)
 
@@ -47,7 +51,7 @@ The current model architecture was engineered under a strict **Zero-Cost Archite
 We translate mathematical accuracy into tangible liberated capital (UAH). Expert planning errors lead to either frozen capital in the warehouse (holding costs ~1.83% per month / 22% annually) or lost sales due to inventory shortages (lost margin ~14%, accounting for partial customer return rates).
 
 * **Pilot Savings (3 Brands):** With an annual turnover of 31.5 million UAH, transitioning from expert accuracy (~87%) to model accuracy (92%) reduces the error margin by 5%. We estimate this saves the business approximately **1.5 million UAH annually**.
-* **Total Business Scale:** Assuming the remaining brands exhibit similar dynamics and volume, the scaling multiplier is approximately 5x–7x. Extrapolating the pilot metrics, deploying the model across the entire business will yield savings of **7.5 to 10.5 million UAH annually**.
+* **Scaling to 8 Brands:** Expanding the model to the full set of 8 priority brands will increase the predictive volume by approximately **2.6x**. Extrapolating the pilot metrics, deploying the model across these brands will yield savings of **4.0 to 5.0 million UAH annually**.
 
 ---
 
@@ -55,8 +59,8 @@ We translate mathematical accuracy into tangible liberated capital (UAH). Expert
 
 Total project duration "turnkey": **4 Months**.
 
-1. **Month 1 (Data Engineering & MLOps):** Developing connectors to the `bas` database, automating data pipelines, and cleansing historical data for the remaining brands.
-2. **Months 2-3 (Modeling & Scaling):** Scaling algorithms to 8 brands. Integrating promotional plans and partner budgets to resolve seasonality issues (including the January anomaly).
+1. **Month 1 (Data Engineering & MLOps):** Developing connectors to the `bas` database, automating data pipelines, and cleansing historical data for the additional 5 brands.
+2. **Months 2-3 (Modeling & Scaling):** Scaling algorithms to all 8 brands. Integrating promotional plans and partner budgets to resolve seasonality issues (including the January anomaly).
 3. **Month 4 (Deployment & UI):** Exporting results back to `bas` or Power BI via accessible "Fact vs. Plan vs. AI Forecast" dashboards. Conducting comprehensive system training for the client's team.
 
 ---
@@ -74,8 +78,8 @@ Executing this project requires a dedicated team of 2 Machine Learning Engineers
 ## 6. ROI Summary
 
 * **Capital Investment:** ~1.75 million UAH.
-* **Projected Annual Savings:** ~7.5 - 10.5 million UAH / year (approx. 625 - 875 thousand UAH per month).
-* **Payback Period:** The project fully recoups its initial cost within **2 to 3 months** of full-scale operation. Subsequently, the system generates pure operational profit by optimizing inventory holding costs and minimizing stockouts.
+* **Projected Annual Savings:** ~4.0 - 5.0 million UAH / year (approx. 330 - 420 thousand UAH per month).
+* **Payback Period:** The project fully recoups its initial cost within **4 to 5 months** of full-scale operation across the 8 brands. Subsequently, the system generates pure operational profit by optimizing inventory holding costs and minimizing stockouts.
 
 ---
 
