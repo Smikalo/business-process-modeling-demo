@@ -6,7 +6,7 @@ Based on the empirical results of the pilot project (encompassing 3 brands) and 
 
 ### 1.1 Data Integration
 * **Elimination of Manual Data Exchange:** We will establish direct integration with the client's ERP system (`bas`), which houses the comprehensive database from 2020 onwards. This will enable the model to automatically extract relevant data (shipments, inventory, master data) and output forecasts without human intervention.
-* **Assortment Scaling:** The model's scope will be expanded from the 3 pilot brands to encompass the company's entire portfolio (20+ brands).
+* **Assortment Scaling:** The model's scope will be expanded from the 3 pilot brands to encompass the company's entire portfolio (8 brands).
 
 ### 1.2 Targeted Model Improvements (Addressing Management Feedback)
 
@@ -56,7 +56,7 @@ We translate mathematical accuracy into tangible liberated capital (UAH). Expert
 Total project duration "turnkey": **4 Months**.
 
 1. **Month 1 (Data Engineering & MLOps):** Developing connectors to the `bas` database, automating data pipelines, and cleansing historical data for the remaining brands.
-2. **Months 2-3 (Modeling & Scaling):** Scaling algorithms to 20+ brands. Integrating promotional plans and partner budgets to resolve seasonality issues (including the January anomaly).
+2. **Months 2-3 (Modeling & Scaling):** Scaling algorithms to 8 brands. Integrating promotional plans and partner budgets to resolve seasonality issues (including the January anomaly).
 3. **Month 4 (Deployment & UI):** Exporting results back to `bas` or Power BI via accessible "Fact vs. Plan vs. AI Forecast" dashboards. Conducting comprehensive system training for the client's team.
 
 ---
