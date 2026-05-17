@@ -1,7 +1,5 @@
 # AI Demand Forecasting: Scaling Strategy, Cost Estimation, and Operational Framework
 
----
-
 ## 1. Technical Development and Scaling Plan
 
 Based on the empirical results of the pilot project (encompassing 3 brands) and the confirmed availability of data, the following plan is constructed on strictly realistic premises.
